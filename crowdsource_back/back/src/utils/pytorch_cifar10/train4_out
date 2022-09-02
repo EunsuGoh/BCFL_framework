@@ -1,0 +1,269 @@
+wandb: Currently logged in as: daeyeolkim. Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.13.2
+wandb: Run data is saved locally in /home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_cifar10/wandb/run-20220901_175701-2i3eihh3
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run ancient-fog-272
+wandb: ⭐️ View project at https://wandb.ai/daeyeolkim/2cp
+wandb: 🚀 View run at https://wandb.ai/daeyeolkim/2cp/runs/2i3eihh3
+/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_cifar10/data_load.py:20: UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at  ../torch/csrc/utils/tensor_new.cpp:201.)
+  _data = torch.tensor(_data)
+4
+Files already downloaded and verified
+['pytorch_cifar10_train.py', '4']
+trainer4: Connected to contract at address 0xbCE4FCfa095d92396B874e695b0Bc3a548183da5
+trainer4: Waiting for round 1 (30000 seconds remaining)...
+trainer4: Round 1 started
+trainer4: Training model, round 1...
+trainer4: Adding model update..., local model cid : QmQmE1EVjMsgYBVJrVp3v8ngxK9Dhk8reek1Fp1kLYviva, round : 1
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 2 (30000 seconds remaining)...
+trainer4: Round 2 started
+trainer4: Training model, round 2...
+trainer4: Adding model update..., local model cid : Qmd6pwmXkd9MvB16USGbqbxaKu6aq8fNHRMMYceSDCUQSa, round : 2
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 3 (29927 seconds remaining)...
+trainer4: Round 3 started
+trainer4: Training model, round 3...
+trainer4: Adding model update..., local model cid : QmR6ftkBBasdSgkCB5WQeQiCE6qxmuES4Uyb6kkZykMNd3, round : 3
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 4 (29927 seconds remaining)...
+trainer4: Round 4 started
+trainer4: Training model, round 4...
+trainer4: Adding model update..., local model cid : QmQgk8LQtFHswJC6gyxqToPRKShHCx8GsCsR6dcutJhpLH, round : 4
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 5 (29927 seconds remaining)...
+trainer4: Round 5 started
+trainer4: Training model, round 5...
+trainer4: Adding model update..., local model cid : QmSraLHzpS19BtjYenjMdmoPC9VwTDnKdeprUSnbjTH1E8, round : 5
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 6 (29926 seconds remaining)...
+trainer4: Round 6 started
+trainer4: Training model, round 6...
+trainer4: Adding model update..., local model cid : QmWbcN8WJ8pvTLwRrqcTcoxPddaC1dHMMB2DGPdGtQNw6n, round : 6
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 7 (29927 seconds remaining)...
+trainer4: Round 7 started
+trainer4: Training model, round 7...
+trainer4: Adding model update..., local model cid : QmaDujt6DU4Jkyqhegfj7et3mfw136HG8QrwU5i69w3Er2, round : 7
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 8 (29927 seconds remaining)...
+trainer4: Round 8 started
+trainer4: Training model, round 8...
+trainer4: Adding model update..., local model cid : QmdogZjGt7J3LU6GhJvvDvdYQMT1S1NUZE8dftg7tjyb5h, round : 8
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 9 (30000 seconds remaining)...
+trainer4: Round 9 started
+trainer4: Training model, round 9...
+trainer4: Adding model update..., local model cid : QmRzKa5bLJ2THPH8ffYuAth2W6NE1BqaLTJSxLdqFw6HFm, round : 9
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 10 (29926 seconds remaining)...
+trainer4: Round 10 started
+trainer4: Training model, round 10...
+trainer4: Adding model update..., local model cid : QmWhr4y6Np8CUNbdHamoQMVi1uF5uDRA4gSC19NCGzq19d, round : 10
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 11 (29926 seconds remaining)...
+trainer4: Round 11 started
+trainer4: Training model, round 11...
+trainer4: Adding model update..., local model cid : QmfEyXYDxMxt2RYnSzenTcdgSaadpC2oWwuqhR8RM3cA8r, round : 11
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 12 (29927 seconds remaining)...
+trainer4: Round 12 started
+trainer4: Training model, round 12...
+trainer4: Adding model update..., local model cid : QmSsimagiwNkYKq2jyovEzKC1x3Tf9U527YKCvfWX5E2xQ, round : 12
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 13 (29926 seconds remaining)...
+trainer4: Round 13 started
+trainer4: Training model, round 13...
+trainer4: Adding model update..., local model cid : QmWupftvT5TQf4HakyVe9hWk5MpSGoticU63fHACiXyoVc, round : 13
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 14 (30000 seconds remaining)...
+trainer4: Round 14 started
+trainer4: Training model, round 14...
+trainer4: Adding model update..., local model cid : QmeoBJrhcfaGLVqAc91Ri7qQteY3iaWiM8rC2CSmdPSxjn, round : 14
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 15 (29927 seconds remaining)...
+trainer4: Round 15 started
+trainer4: Training model, round 15...
+trainer4: Adding model update..., local model cid : Qmaw26itmJic1A1zDmbQBZ5KoG19t4SxZ49H4u9tnUvUjJ, round : 15
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 16 (30000 seconds remaining)...
+trainer4: Round 16 started
+trainer4: Training model, round 16...
+trainer4: Adding model update..., local model cid : QmYnp4f3SjGrp4dNrFV6HPuqKpheGaNpKx3Snqk8q6U35P, round : 16
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 17 (30000 seconds remaining)...
+trainer4: Round 17 started
+trainer4: Training model, round 17...
+trainer4: Adding model update..., local model cid : QmUovKm91QCdQ8weEdCHvynYs1j6r7V6sK5DUVyhwyj5JX, round : 17
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 18 (29927 seconds remaining)...
+trainer4: Round 18 started
+trainer4: Training model, round 18...
+trainer4: Adding model update..., local model cid : QmRWDPgNriUpgpHbED2wkLg8TZKhpSBmkQyUQLHXYCrU1r, round : 18
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 19 (30000 seconds remaining)...
+trainer4: Round 19 started
+trainer4: Training model, round 19...
+trainer4: Adding model update..., local model cid : QmYi9G15RCCd22uXfd5rFpGadVWUY4LiNf44VeBTVgnPsi, round : 19
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 20 (30000 seconds remaining)...
+trainer4: Round 20 started
+trainer4: Training model, round 20...
+trainer4: Adding model update..., local model cid : QmVDmzq5d7vq2kX7cTquyxpC2Yuu8MVJcWNqjCYTvB1tbk, round : 20
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 21 (30000 seconds remaining)...
+trainer4: Round 21 started
+trainer4: Training model, round 21...
+trainer4: Adding model update..., local model cid : QmNm87NRX92gsNK5BDX35PGNgE2nsuvV2ojciNAjf2EKE1, round : 21
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 22 (29928 seconds remaining)...
+trainer4: Round 22 started
+trainer4: Training model, round 22...
+trainer4: Adding model update..., local model cid : QmcBder1CvS4xNa69vZ3W6VciAGJY9dbvQtdc7ak6rFRcw, round : 22
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 23 (29926 seconds remaining)...
+trainer4: Round 23 started
+trainer4: Training model, round 23...
+trainer4: Adding model update..., local model cid : QmemoYr4RdTd1o8jiLPrFn9unkqXRQXZB7ADWuBLo8gA86, round : 23
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 24 (29927 seconds remaining)...
+trainer4: Round 24 started
+trainer4: Training model, round 24...
+trainer4: Adding model update..., local model cid : QmeUSiWRJK3hN24WLVnr7uFRW1Bi9XoyyrKKBteRqVKcCn, round : 24
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+trainer4: Waiting for round 25 (30000 seconds remaining)...
+trainer4: Round 25 started
+trainer4: Training model, round 25...
+trainer4: Adding model update..., local model cid : QmWHMUX1czRumrho9pDLFwdra2SH6ERPEhygkgSAuCu47N, round : 25
+trainer4: Waiting for 1 transactions...
+trainer4: 1 transactions mined
+wandb: Waiting for W&B process to finish... (failed 1). Press Control-C to abort syncing.
+wandb: - 0.001 MB of 0.001 MB uploaded (0.000 MB deduped)wandb: \ 0.001 MB of 0.001 MB uploaded (0.000 MB deduped)wandb: | 0.001 MB of 0.001 MB uploaded (0.000 MB deduped)wandb: / 0.001 MB of 0.024 MB uploaded (0.000 MB deduped)wandb: - 0.001 MB of 0.024 MB uploaded (0.000 MB deduped)wandb: \ 0.001 MB of 0.024 MB uploaded (0.000 MB deduped)wandb: | 0.001 MB of 0.024 MB uploaded (0.000 MB deduped)wandb: / 0.001 MB of 0.024 MB uploaded (0.000 MB deduped)wandb: - 0.001 MB of 0.024 MB uploaded (0.000 MB deduped)wandb: \ 0.001 MB of 0.024 MB uploaded (0.000 MB deduped)wandb: | 0.024 MB of 0.024 MB uploaded (0.000 MB deduped)wandb: / 0.024 MB of 0.024 MB uploaded (0.000 MB deduped)wandb: - 0.024 MB of 0.024 MB uploaded (0.000 MB deduped)wandb: \ 0.024 MB of 0.024 MB uploaded (0.000 MB deduped)wandb: | 0.024 MB of 0.024 MB uploaded (0.000 MB deduped)wandb: / 0.024 MB of 0.024 MB uploaded (0.000 MB deduped)wandb: - 0.024 MB of 0.024 MB uploaded (0.000 MB deduped)wandb: \ 0.024 MB of 0.024 MB uploaded (0.000 MB deduped)wandb: | 0.024 MB of 0.024 MB uploaded (0.000 MB deduped)wandb:                                                                                
+wandb: 
+wandb: Run history:
+wandb: loss ▇▅█▇▂▃▂▄▄▂▃▆▄▁▂▃▁▁▁▃▁▂▂▁▁▅▃▁▃▂█▂▁▂▂▄▁▂▁▁
+wandb: 
+wandb: Run summary:
+wandb: loss 0.0716
+wandb: 
+wandb: Synced ancient-fog-272: https://wandb.ai/daeyeolkim/2cp/runs/2i3eihh3
+wandb: Synced 6 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20220901_175701-2i3eihh3/logs
+Traceback (most recent call last):
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/urllib3/connectionpool.py", line 426, in _make_request
+    six.raise_from(e, None)
+  File "<string>", line 3, in raise_from
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/urllib3/connectionpool.py", line 421, in _make_request
+    httplib_response = conn.getresponse()
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/http/client.py", line 1348, in getresponse
+    response.begin()
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/http/client.py", line 316, in begin
+    version, status, reason = self._read_status()
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/http/client.py", line 277, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/socket.py", line 669, in readinto
+    return self._sock.recv_into(b)
+socket.timeout: timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/requests/adapters.py", line 439, in send
+    resp = conn.urlopen(
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/urllib3/connectionpool.py", line 726, in urlopen
+    retries = retries.increment(
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/urllib3/util/retry.py", line 410, in increment
+    raise six.reraise(type(error), error, _stacktrace)
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/urllib3/packages/six.py", line 735, in reraise
+    raise value
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/urllib3/connectionpool.py", line 670, in urlopen
+    httplib_response = self._make_request(
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/urllib3/connectionpool.py", line 428, in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/urllib3/connectionpool.py", line 335, in _raise_timeout
+    raise ReadTimeoutError(
+urllib3.exceptions.ReadTimeoutError: HTTPConnectionPool(host='127.0.0.1', port=7545): Read timed out. (read timeout=10)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "pytorch_cifar10_train.py", line 495, in <module>
+    custom_cifar_crowdsource()
+  File "pytorch_cifar10_train.py", line 476, in custom_cifar_crowdsource
+    trainer.train_until(final_round_num=TRAINING_ITERATIONS,batch_size=4,epochs=5,learning_rate=0.001)
+  File "pytorch_cifar10_train.py", line 190, in train_until
+    self._gas_history[r] = self.get_gas_used()
+  File "pytorch_cifar10_train.py", line 79, in get_gas_used
+    return self._contract.get_gas_used()
+  File "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_cifar10/contract_clients.py", line 30, in get_gas_used
+    receipts = [self._w3.eth.getTransactionReceipt(tx) for tx in self.txs]
+  File "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_cifar10/contract_clients.py", line 30, in <listcomp>
+    receipts = [self._w3.eth.getTransactionReceipt(tx) for tx in self.txs]
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/web3/module.py", line 57, in caller
+    result = w3.manager.request_blocking(method_str, params, error_formatters)
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/web3/manager.py", line 156, in request_blocking
+    response = self._make_request(method, params)
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/web3/manager.py", line 135, in _make_request
+    return request_func(method, params)
+  File "cytoolz/functoolz.pyx", line 250, in cytoolz.functoolz.curry.__call__
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/web3/middleware/formatting.py", line 76, in apply_formatters
+    response = make_request(method, params)
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/web3/middleware/gas_price_strategy.py", line 35, in middleware
+    return make_request(method, params)
+  File "cytoolz/functoolz.pyx", line 250, in cytoolz.functoolz.curry.__call__
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/web3/middleware/formatting.py", line 74, in apply_formatters
+    response = make_request(method, formatted_params)
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/web3/middleware/attrdict.py", line 33, in middleware
+    response = make_request(method, params)
+  File "cytoolz/functoolz.pyx", line 250, in cytoolz.functoolz.curry.__call__
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/web3/middleware/formatting.py", line 76, in apply_formatters
+    response = make_request(method, params)
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/web3/middleware/normalize_errors.py", line 25, in middleware
+    result = make_request(method, params)
+  File "cytoolz/functoolz.pyx", line 250, in cytoolz.functoolz.curry.__call__
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/web3/middleware/formatting.py", line 76, in apply_formatters
+    response = make_request(method, params)
+  File "cytoolz/functoolz.pyx", line 250, in cytoolz.functoolz.curry.__call__
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/web3/middleware/formatting.py", line 74, in apply_formatters
+    response = make_request(method, formatted_params)
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/web3/middleware/buffered_gas_estimate.py", line 40, in middleware
+    return make_request(method, params)
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/web3/middleware/exception_retry_request.py", line 104, in middleware
+    return make_request(method, params)
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/web3/providers/rpc.py", line 88, in make_request
+    raw_response = make_post_request(
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/web3/_utils/request.py", line 48, in make_post_request
+    response = session.post(endpoint_uri, data=data, *args, **kwargs)  # type: ignore
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/requests/sessions.py", line 581, in post
+    return self.request('POST', url, data=data, json=json, **kwargs)
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/requests/sessions.py", line 533, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/requests/sessions.py", line 646, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/tvs/anaconda3/envs/2cp_new/lib/python3.8/site-packages/requests/adapters.py", line 529, in send
+    raise ReadTimeout(e, request=request)
+requests.exceptions.ReadTimeout: HTTPConnectionPool(host='127.0.0.1', port=7545): Read timed out. (read timeout=10)

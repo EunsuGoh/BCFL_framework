@@ -1,0 +1,20 @@
+{
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}/client"
+    ],
+    "terminal.integrated.env.osx": {
+        "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}/client",
+    },
+    "terminal.integrated.env.linux": {
+        "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}/client",
+    },
+    "terminal.integrated.env.windows": {
+        "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}/client",
+    },
+    "python.linting.pylintArgs": [
+        "--generated-members=numpy.* ,torch.*"
+    ],
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/client"
+    ]
+}
