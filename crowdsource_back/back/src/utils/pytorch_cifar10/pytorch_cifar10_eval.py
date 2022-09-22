@@ -419,14 +419,14 @@ class CrowdsourceClient(_GenesisClient):
         return start_loss - loss
 
 wandb.init(project="2cp",entity="daeyeolkim")
-wandb.run.name = "Evaluation-round200-epoch5"
+wandb.run.name = "Evaluation-round15-epoch5"
 wandb.config = {
   "learning_rate": 0.3,
   "epochs": 2,
   "batch_size": 64
 }
 
-TRAINING_ITERATIONS = 100
+TRAINING_ITERATIONS = 5
 TRAINING_HYPERPARAMS = {
     'final_round_num': TRAINING_ITERATIONS,
     'batch_size': 64,
@@ -448,35 +448,11 @@ transform = transforms.Compose(
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
 batch_size = 64
-# # train set load
-# trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-#                                         download=True, transform=transform)
-# trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
-#                                           shuffle=True, num_workers=2)
-
-# #test set load
-# testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-#                                        download=True, transform=transform)
-# testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-#                                          shuffle=False, num_workers=2)
 
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-# class MyCifar(torch.utils.data.Dataset):
-    
-#     def __init__(self, data, target, transform=None):
-#         self.data = data 
-#         self.target = target 
-        
-#     def __getitem__(self, index):
-#         x = self.data[index]
-#         y = self.target[index]
-        
-#         if self.transform:
-#             x = self.transform(x)
-        
-#         return x, y, index
+
     
 
 class Cifar10Net(nn.Module):
@@ -498,21 +474,10 @@ class Cifar10Net(nn.Module):
         x = self.fc3(x)
         return x
 
-# net = Cifar10Net()
-# eval_data = eval_data.astype(np.float32)
-# # eval_data = np.ndarray()
-# eval_data = torch.tensor(eval_data)
-# eval_data = normalize(eval_data,p=4.0)
-# eval_data = eval_data.permute((0,3,2,1))
-
-
 def custom_cifar_crowdsource():
     testset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                        download=True, transform=transform)
-    # print(device)
-    # testset.to(device)
-    # test_dataset = MyCifar(eval_data, eval_targets)
-    # test_dataset.to(device)
+
     eval_data, eval_targets = testset.data, testset.targets
     my_eval_data = MyCifar(eval_data, eval_targets)
     eval = CrowdsourceClient("Evaluator",my_eval_data, eval_targets,Cifar10Net,F.cross_entropy,0,deploy=True)

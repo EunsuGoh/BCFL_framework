@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import numpy as np
 from torch.nn.functional import normalize
 import torch.optim as optim
-from data_load import load_data, MyCifar
+from data_load import load_data, MyMnist
 import time
 import methodtools
 import pyvacy.optim
@@ -20,12 +20,15 @@ import json
 from torch.utils.data.dataset import random_split
 from torch.utils.data.dataset import Subset
 import sys
+import os
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 print(sys.argv[1])
 wandb.init(project="2cp",entity="daeyeolkim")
 
-wandb.run.name = "Trainer"+sys.argv[1]
+wandb.run.name = "Mnist-Trainer"+sys.argv[1]
 wandb.config = {
     "learning_rate": 0.3,
     "epochs": 10,
@@ -438,58 +441,44 @@ batch_size = 64
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-class Cifar10Net(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+class MnistNet(nn.Module):
+  def __init__(self): # layer 정의
+        super(MnistNet, self).__init__()
+        # input size = 28x28 
+        self.conv1 = nn.Conv2d(1, 10, kernel_size=5) # input channel = 1, filter = 10, kernel size = 5, zero padding = 0, stribe = 1
+        # ((W-K+2P)/S)+1 공식으로 인해 ((28-5+0)/1)+1=24 -> 24x24로 변환
+        # maxpooling하면 12x12
+        self.conv2 = nn.Conv2d(10, 20, kernel_size=5) # input channel = 1, filter = 10, kernel size = 5, zero padding = 0, stribe = 1
+        # ((12-5+0)/1)+1=8 -> 8x8로 변환
+        # maxpooling하면 4x4
+        self.drop2D = nn.Dropout2d(p=0.25, inplace=False) # 랜덤하게 뉴런을 종료해서 학습을 방해해 학습이 학습용 데이터에 치우치는 현상을 막기 위해 사용
+        self.mp = nn.MaxPool2d(2)  # 오버피팅을 방지하고, 연산에 들어가는 자원을 줄이기 위해 maxpolling
+        self.fc1 = nn.Linear(320,100) # 4x4x20 vector로 flat한 것을 100개의 출력으로 변경
+        self.fc2 = nn.Linear(100,10) # 100개의 출력을 10개의 출력으로 변경
 
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = torch.flatten(x, 1) # flatten all dimensions except batch
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+  def forward(self, x):
+        x = F.relu(self.mp(self.conv1(x))) # convolution layer 1번에 relu를 씌우고 maxpool, 결과값은 12x12x10
+        x = F.relu(self.mp(self.conv2(x))) # convolution layer 2번에 relu를 씌우고 maxpool, 결과값은 4x4x20
+        x = self.drop2D(x)
+        x = x.view(x.size(0), -1) # flat
+        x = self.fc1(x) # fc1 레이어에 삽입
+        x = self.fc2(x) # fc2 레이어에 삽입
+        return F.log_softmax(x) # fully-connected layer에 넣고 logsoftmax 적용
 
 def custom_cifar_crowdsource():
-    # trainset.to(device)
-    trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                        download=True, transform=transform)
+
     tf = open("eval_contract.json","r")
     new_dict = json.load(tf)
     eval_contract_addr = new_dict["eval_cont_addr"]
 ## setting trainer's informations
-    print(sys.argv)
     trainer_name = "trainer" + sys.argv[1] #name
     train_data,train_targets = load_data(int(sys.argv[1])+1) #dataset
-    # train_data,train_targets = load_data(2) #dataset with same data
-    my_train_data = MyCifar(train_data, train_targets) #dataset custom
-    trainer = CrowdsourceClient(trainer_name,my_train_data,train_targets,Cifar10Net,F.cross_entropy,int(sys.argv[1]),eval_contract_addr) #2cp client setting
+    # print(train_data)
+    my_train_data = MyMnist(train_data, train_targets, True) #dataset custom
+    # print(my_train_data.__getitem__(0))
+    trainer = CrowdsourceClient(trainer_name,my_train_data,train_targets,MnistNet,F.cross_entropy,int(sys.argv[1]),eval_contract_addr) #2cp client setting
 
 ## training
-    trainer.train_until(final_round_num=TRAINING_ITERATIONS,batch_size=4,epochs=2,learning_rate=0.001)
+    trainer.train_until(final_round_num=TRAINING_ITERATIONS,batch_size=100,epochs=2,learning_rate=0.001)
     print_token_count(trainer)
-
-    # train_size = int(len(trainset) * 0.2)
-    
-    # train_size = list(range(0,10000))
-
-
-    # train1_dataset,train2_dataset ,train3_dataset,train4_dataset,train5_dataset = random_split(trainset, [train_size, train_size, train_size,train_size,train_size])
-    # train1_dataset = train1_dataset.to(device)
-
-    # train1_dataset = Subset(trainset,train_size)
-    # train1_data, train1_targets = train1_dataset.data, train1_dataset.targets
-    # my_train1_data = MyCifar(train1_data, train1_targets)
-    # trainer1 = CrowdsourceClient(trainer_name,my_train1_data,train1_targets,Cifar10Net,F.cross_entropy,1,eval_contract_addr)
-    # # print(type(train1_dataset))
-    # trainer1.train_until(final_round_num=TRAINING_ITERATIONS,batch_size=64,epochs=30,learning_rate=0.3)
-    # print_token_count(trainer1)
-    
 custom_cifar_crowdsource()

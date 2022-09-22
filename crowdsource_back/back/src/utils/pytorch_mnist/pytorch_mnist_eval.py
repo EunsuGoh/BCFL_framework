@@ -1,4 +1,3 @@
-
 import torch
 import torchvision
 import torchvision.transforms as transforms
@@ -7,49 +6,23 @@ import torch.nn.functional as F
 import numpy as np
 from torch.nn.functional import normalize
 import torch.optim as optim
-from data_load import load_data, MyCifar
+from data_load import load_data, MyMnist
 import time
 import methodtools
+import torch
 import pyvacy.optim
+from pyvacy.analysis import moments_accountant as epsilon
 from ipfs_client import IPFSClient
-from contract_clients import CrowdsourceContractClient, ConsortiumContractClient
+from contract_clients import CrowdsourceContractClient
 import shapley
 import wandb
 from utils import print_token_count
 import json
-from torch.utils.data.dataset import random_split
-from torch.utils.data.dataset import Subset
-import sys
+from torchvision.transforms import ToTensor
 
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
-print(sys.argv[1])
 wandb.init(project="2cp",entity="daeyeolkim")
 
-wandb.run.name = "Trainer"+sys.argv[1]
-wandb.config = {
-    "learning_rate": 0.3,
-    "epochs": 10,
-    "batch_size": 64
-    }
-
-# _hook = sy.TorchHook(torch)
-
-TRAINING_ITERATIONS = 5
-
-TRAINING_HYPERPARAMS = {
-    'final_round_num': TRAINING_ITERATIONS,
-    'batch_size': 64,
-    'epochs': 2,
-    'learning_rate': 0.3,
-}
-TORCH_SEED = 8888
-EVAL_METHOD = 'step'
-ROUND_DURATION = 1200
-
-save_root_path = "/home/dy/2cp_workspace/2CP/crowdsource_back/back/src/utils/pytorch_cifar10/data/"
-model_name = "cifar-10-client-"
-option="data"
-torch.manual_seed(TORCH_SEED)
 class _BaseClient:
     """
     Abstract base client containing common features of the clients for both the
@@ -107,7 +80,7 @@ class _GenesisClient(_BaseClient):
         """
         self._print("Setting genesis...")
         genesis_model = self._model_constructor()
-        genesis_model.to(device)
+        # genesis_model.to(device)
         genesis_cid = self._upload_model(genesis_model)
         self._print(f"Genesis model cid : {genesis_cid}")
         tx = self._contract.setGenesis(
@@ -138,12 +111,15 @@ class CrowdsourceClient(_GenesisClient):
                          contract_address,
                          deploy)
         self.data_length = data.__len__()
+        
 
         # self._worker = sy.VirtualWorker(_hook, id=name)
         self._criterion = model_criterion
         # TODO: should actually send these to the syft worker.
         # Temporarily stopped doing this as a workaround for subtle multithreading bugs
         # in order to run experiments on contributivity
+        # data.to(device)
+        # targets.to(device)
         self._data = data  # .send(self._worker)
         self._targets = targets  # .send(self._worker)
         # self._data.to(device)
@@ -157,7 +133,6 @@ class CrowdsourceClient(_GenesisClient):
                                          shuffle=False, num_workers=0)
         ###
         # train loader is defined each time training is run
-        
         self._gas_history = {}
 
     def train_one_round(self, batch_size, epochs, learning_rate, dp_params=None):
@@ -198,7 +173,10 @@ class CrowdsourceClient(_GenesisClient):
             txs = self._set_tokens(scores)
             self.wait_for_txs(txs)
             self._gas_history[r+1] = self.get_gas_used()
+            global_loss = self.evaluate_global(r)
+            wandb.log({"global_loss": global_loss})
         self._print(f"Done evaluating. Gas used: {self.get_gas_used()}")
+        
 
     def is_evaluator(self):
         return self._contract.evaluator() == self._contract.address
@@ -265,7 +243,6 @@ class CrowdsourceClient(_GenesisClient):
         Run a round of training using own data, upload and record the contribution.
         """
         model = self.get_current_global_model()
-        # model.to(device)
         self._print(f"Training model, round {round_num}...")
         model = self._train_model(
             model, batch_size, epochs, learning_rate, dp_params)
@@ -279,12 +256,7 @@ class CrowdsourceClient(_GenesisClient):
         # train_loader = torch.utils.data.DataLoader(
         #     sy.BaseDataset(self._data, self._targets),
         #     batch_size=batch_size)
-        # data = torch.tensor(self._data)
-        train_loader = torch.utils.data.DataLoader(self._data, batch_size=batch_size,
-                                          shuffle=True, num_workers=0)
-        # self._data.to(device)
-        model.to(device)
-        # train_loader.to(device)
+        train_loader = torch.utils.data.DataLoader(self._data, batch_size=batch_size)
         ###
         # model = model.send(self._worker)
         model.train()
@@ -317,21 +289,28 @@ class CrowdsourceClient(_GenesisClient):
                 loss = self._criterion(pred, labels)
                 loss.backward()
                 optimizer.step()
-                wandb.log({"loss": loss})
+                # wandb.watch(model)
+                # wandb.log({"loss": loss})
         # model.get()
         return model
 
-    def _evaluate_model(self, model):
+    def _evaluate_model(self, model, *localFlag):
         model = model  # .send(self._worker)
+        model.to(device)
+        # self._test_loader.to(device)
         model.eval()
         with torch.no_grad():
             total_loss = 0
             for data, labels in self._test_loader:
+                # data.to(device)
                 pred = model(data)
                 total_loss += self._criterion(pred, labels
                                               ).item()
                 # ).get().item()
         avg_loss = total_loss / len(self._test_loader)
+        ##HERE!
+        if localFlag:
+            wandb.log({"avg_loss": avg_loss})
         return avg_loss
 
     def _record_model(self, uploaded_cid, training_round):
@@ -362,6 +341,7 @@ class CrowdsourceClient(_GenesisClient):
 
     def _avg_model(self, models):
         avg_model = self._model_constructor()
+        # avg_model.to(device)
         with torch.no_grad():
             for params in avg_model.parameters():
                 params *= 0
@@ -385,9 +365,21 @@ class CrowdsourceClient(_GenesisClient):
                 characteristic_function, cids)
         if method == 'step':
             scores = {}
+            idx = 0
             for cid in cids:
                 scores[cid] = self._marginal_value(training_round, cid)
-                wandb.log({"marginal_value": scores[cid]})
+                ########### Trainer 2로만 두고 했으니 유의 바람!!
+                print(idx)
+                print(scores[cid])
+                if idx==0:
+                    wandb.log({"marginal_value_trainer1": scores[cid]})
+                elif idx==1:
+                    wandb.log({"marginal_value_trainer2": scores[cid]})
+                elif idx==2:
+                    wandb.log({"marginal_value_trainer3": scores[cid]})
+                else:
+                    wandb.log({"marginal_value_trainer4": scores[cid]})
+                idx+=1
 
         self._print(
             f"Scores in round :{training_round} are :{list(scores.values())}: and cids :{cids}")
@@ -416,80 +408,91 @@ class CrowdsourceClient(_GenesisClient):
         start_loss = self.evaluate_global(training_round)
         models = self._get_models(update_cids)
         avg_model = self._avg_model(models)
-        loss = self._evaluate_model(avg_model)
+        loss = self._evaluate_model(avg_model,True)
         return start_loss - loss
+
+wandb.init(project="2cp",entity="daeyeolkim")
+wandb.run.name = "MNist-Eval"
+wandb.config = {
+  "learning_rate": 0.3,
+  "epochs": 2,
+  "batch_size": 64
+}
+
+TRAINING_ITERATIONS = 5
+TRAINING_HYPERPARAMS = {
+    'final_round_num': TRAINING_ITERATIONS,
+    'batch_size': 64,
+    'epochs': 2,
+    'learning_rate': 0.3,
+}
+TORCH_SEED = 8888
+EVAL_METHOD = 'step'
+ROUND_DURATION = 30000
+
+save_root_path = "/home/dy/2cp_workspace/2CP/crowdsource_back/back/src/utils/pytorch_cifar10/data/"
+model_name = "cifar-10-client-"
+option="data"
+torch.manual_seed(TORCH_SEED)
+
+
 transform = transforms.Compose(
     [transforms.ToTensor(),
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
 batch_size = 64
-# # train set load
-# trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-#                                         download=True, transform=transform)
-# trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
-#                                           shuffle=True, num_workers=2)
-
-# #test set load
-# testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-#                                        download=True, transform=transform)
-# testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-#                                          shuffle=False, num_workers=2)
 
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-class Cifar10Net(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
 
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = torch.flatten(x, 1) # flatten all dimensions except batch
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+    
+
+class MnistNet(nn.Module):
+  def __init__(self): # layer 정의
+        super(MnistNet, self).__init__()
+        # input size = 28x28 
+        self.conv1 = nn.Conv2d(1, 10, kernel_size=5) # input channel = 1, filter = 10, kernel size = 5, zero padding = 0, stribe = 1
+        # ((W-K+2P)/S)+1 공식으로 인해 ((28-5+0)/1)+1=24 -> 24x24로 변환
+        # maxpooling하면 12x12
+        self.conv2 = nn.Conv2d(10, 20, kernel_size=5) # input channel = 1, filter = 10, kernel size = 5, zero padding = 0, stribe = 1
+        # ((12-5+0)/1)+1=8 -> 8x8로 변환
+        # maxpooling하면 4x4
+        self.drop2D = nn.Dropout2d(p=0.25, inplace=False) # 랜덤하게 뉴런을 종료해서 학습을 방해해 학습이 학습용 데이터에 치우치는 현상을 막기 위해 사용
+        self.mp = nn.MaxPool2d(2)  # 오버피팅을 방지하고, 연산에 들어가는 자원을 줄이기 위해 maxpolling
+        self.fc1 = nn.Linear(320,100) # 4x4x20 vector로 flat한 것을 100개의 출력으로 변경
+        self.fc2 = nn.Linear(100,10) # 100개의 출력을 10개의 출력으로 변경
+
+  def forward(self, x):
+        x = F.relu(self.mp(self.conv1(x))) # convolution layer 1번에 relu를 씌우고 maxpool, 결과값은 12x12x10
+        x = F.relu(self.mp(self.conv2(x))) # convolution layer 2번에 relu를 씌우고 maxpool, 결과값은 4x4x20
+        x = self.drop2D(x)
+        x = x.view(x.size(0), -1) # flat
+        x = self.fc1(x) # fc1 레이어에 삽입
+        x = self.fc2(x) # fc2 레이어에 삽입
+        return F.log_softmax(x) # fully-connected layer에 넣고 logsoftmax 적용
 
 def custom_cifar_crowdsource():
-    # trainset.to(device)
-    trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                        download=True, transform=transform)
-    tf = open("eval_contract.json","r")
-    new_dict = json.load(tf)
-    eval_contract_addr = new_dict["eval_cont_addr"]
-## setting trainer's informations
-    print(sys.argv)
-    trainer_name = "trainer" + sys.argv[1] #name
-    train_data,train_targets = load_data(int(sys.argv[1])+1) #dataset
-    # train_data,train_targets = load_data(2) #dataset with same data
-    my_train_data = MyCifar(train_data, train_targets) #dataset custom
-    trainer = CrowdsourceClient(trainer_name,my_train_data,train_targets,Cifar10Net,F.cross_entropy,int(sys.argv[1]),eval_contract_addr) #2cp client setting
-
-## training
-    trainer.train_until(final_round_num=TRAINING_ITERATIONS,batch_size=4,epochs=2,learning_rate=0.001)
-    print_token_count(trainer)
-
-    # train_size = int(len(trainset) * 0.2)
-    
-    # train_size = list(range(0,10000))
-
-
-    # train1_dataset,train2_dataset ,train3_dataset,train4_dataset,train5_dataset = random_split(trainset, [train_size, train_size, train_size,train_size,train_size])
-    # train1_dataset = train1_dataset.to(device)
-
-    # train1_dataset = Subset(trainset,train_size)
-    # train1_data, train1_targets = train1_dataset.data, train1_dataset.targets
-    # my_train1_data = MyCifar(train1_data, train1_targets)
-    # trainer1 = CrowdsourceClient(trainer_name,my_train1_data,train1_targets,Cifar10Net,F.cross_entropy,1,eval_contract_addr)
-    # # print(type(train1_dataset))
-    # trainer1.train_until(final_round_num=TRAINING_ITERATIONS,batch_size=64,epochs=30,learning_rate=0.3)
-    # print_token_count(trainer1)
-    
+    testset = torchvision.datasets.MNIST(
+    root = './data/MNIST',
+    train = False,
+    download = True,
+    transform = transforms.Compose([
+        transforms.ToTensor() # 데이터를 0에서 255까지 있는 값을 0에서 1사이 값으로 변환
+    ])
+)
+    eval_data, eval_targets = testset.data, testset.targets
+    # print(eval_data)
+    my_eval_data = MyMnist(eval_data, eval_targets)
+    # print(my_eval_data.x_data) 
+    eval = CrowdsourceClient("Evaluator",my_eval_data, eval_targets,MnistNet,F.cross_entropy,0,deploy=True)
+    my_dict = {"eval_cont_addr":eval.contract_address}   
+    tf = open("eval_contract.json","w")
+    json.dump(my_dict,tf)
+    tf.close()
+    eval.set_genesis_model(
+        round_duration=ROUND_DURATION,
+        max_num_updates=4
+    )
+    eval.evaluate_until(TRAINING_ITERATIONS,EVAL_METHOD)
 custom_cifar_crowdsource()

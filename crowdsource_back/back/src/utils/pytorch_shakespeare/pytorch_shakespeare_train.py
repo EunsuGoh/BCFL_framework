@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import numpy as np
 from torch.nn.functional import normalize
 import torch.optim as optim
-from data_load import load_data, MyCifar
+from data_load import MyShakespeare
 import time
 import methodtools
 import pyvacy.optim
@@ -25,16 +25,11 @@ device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('
 print(sys.argv[1])
 wandb.init(project="2cp",entity="daeyeolkim")
 
-wandb.run.name = "Trainer"+sys.argv[1]
-wandb.config = {
-    "learning_rate": 0.3,
-    "epochs": 10,
-    "batch_size": 64
-    }
+wandb.run.name = "Shakespeare-Trainer"+sys.argv[1]
 
 # _hook = sy.TorchHook(torch)
 
-TRAINING_ITERATIONS = 5
+TRAINING_ITERATIONS = 15
 
 TRAINING_HYPERPARAMS = {
     'final_round_num': TRAINING_ITERATIONS,
@@ -438,58 +433,54 @@ batch_size = 64
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-class Cifar10Net(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+class ShakespeareLstm(nn.Module):
+  def __init__(self): # layer 정의
+        super(ShakespeareLstm, self).__init__()
+        self.embed = nn.Embedding(80, 8)
+        self.lstm = nn.LSTM(8, 256, 2, batch_first=True)
+        # self.h0 = torch.zeros(2, batch_size, 256).requires_grad_()
+        self.drop = nn.Dropout()
+        self.out = nn.Linear(256, 80)
 
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = torch.flatten(x, 1) # flatten all dimensions except batch
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
-
+  def forward(self, x):
+        x = self.embed(x)
+        # if self.h0.size(1) == x.size(0):
+        #     self.h0.data.zero_()
+        #     # self.c0.data.zero_()
+        # else:
+        #     # resize hidden vars
+        #     device = next(self.parameters()).device
+        #     self.h0 = torch.zeros(2, x.size(0), 256).to(device).requires_grad_()
+        x, hidden = self.lstm(x)
+        x = self.drop(x)
+        # x = x.contiguous().view(-1, 256)
+        # x = x.contiguous().view(-1, 256)
+        return self.out(x[:, -1, :])
+    
+    # def init_hidden(self, batch_size):
+    #     weight = next(self.parameters()).data
+    #
+    #     initial_hidden = (weight.new(2, batch_size, 256).zero_(),
+    #                       weight.new(2, batch_size, 256).zero_())
+    #
+    #     return initial_hidden
 def custom_cifar_crowdsource():
-    # trainset.to(device)
-    trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                        download=True, transform=transform)
+    trainset_path = '/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_shakespeare/data/user_data/'+'trainer'+sys.argv[1]+'_data.json'
     tf = open("eval_contract.json","r")
     new_dict = json.load(tf)
     eval_contract_addr = new_dict["eval_cont_addr"]
 ## setting trainer's informations
-    print(sys.argv)
     trainer_name = "trainer" + sys.argv[1] #name
-    train_data,train_targets = load_data(int(sys.argv[1])+1) #dataset
-    # train_data,train_targets = load_data(2) #dataset with same data
-    my_train_data = MyCifar(train_data, train_targets) #dataset custom
-    trainer = CrowdsourceClient(trainer_name,my_train_data,train_targets,Cifar10Net,F.cross_entropy,int(sys.argv[1]),eval_contract_addr) #2cp client setting
+    with open(trainset_path,'r') as f:
+        train_dataset = json.load(f)
+        train_data = train_dataset['x']
+        train_targets = train_dataset['y']
+    # print(train_data)
+    my_train_data = MyShakespeare(train_data, train_targets, True) #dataset custom
+    # print(my_train_data.__getitem__(0))
+    trainer = CrowdsourceClient(trainer_name,my_train_data,train_targets,ShakespeareLstm,F.cross_entropy,int(sys.argv[1]),eval_contract_addr) #2cp client setting
 
 ## training
-    trainer.train_until(final_round_num=TRAINING_ITERATIONS,batch_size=4,epochs=2,learning_rate=0.001)
+    trainer.train_until(final_round_num=TRAINING_ITERATIONS,batch_size=1,epochs=2,learning_rate=0.001)
     print_token_count(trainer)
-
-    # train_size = int(len(trainset) * 0.2)
-    
-    # train_size = list(range(0,10000))
-
-
-    # train1_dataset,train2_dataset ,train3_dataset,train4_dataset,train5_dataset = random_split(trainset, [train_size, train_size, train_size,train_size,train_size])
-    # train1_dataset = train1_dataset.to(device)
-
-    # train1_dataset = Subset(trainset,train_size)
-    # train1_data, train1_targets = train1_dataset.data, train1_dataset.targets
-    # my_train1_data = MyCifar(train1_data, train1_targets)
-    # trainer1 = CrowdsourceClient(trainer_name,my_train1_data,train1_targets,Cifar10Net,F.cross_entropy,1,eval_contract_addr)
-    # # print(type(train1_dataset))
-    # trainer1.train_until(final_round_num=TRAINING_ITERATIONS,batch_size=64,epochs=30,learning_rate=0.3)
-    # print_token_count(trainer1)
-    
 custom_cifar_crowdsource()
