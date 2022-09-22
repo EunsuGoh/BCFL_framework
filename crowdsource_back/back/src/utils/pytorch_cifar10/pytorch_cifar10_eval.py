@@ -19,13 +19,13 @@ import wandb
 from utils import print_token_count
 import json
 from torchvision.transforms import ToTensor
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
-wandb.init(project="2cp",entity="daeyeolkim")
-wandb.config = {
-    "learning_rate": 0.3,
-    "epochs": 2,
-    "batch_size": 64
-    }
+wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
 
 # _hook = sy.TorchHook(torch)
 
@@ -420,11 +420,6 @@ class CrowdsourceClient(_GenesisClient):
 
 wandb.init(project="2cp",entity="daeyeolkim")
 wandb.run.name = "Evaluation-round15-epoch5"
-wandb.config = {
-  "learning_rate": 0.3,
-  "epochs": 2,
-  "batch_size": 64
-}
 
 TRAINING_ITERATIONS = 5
 TRAINING_HYPERPARAMS = {
@@ -487,7 +482,7 @@ def custom_cifar_crowdsource():
     tf.close()
     eval.set_genesis_model(
         round_duration=ROUND_DURATION,
-        max_num_updates=4
+        max_num_updates=int(os.environ.get("MAX_NUM_UPDATES"))
     )
     eval.evaluate_until(TRAINING_ITERATIONS,EVAL_METHOD)
 custom_cifar_crowdsource()

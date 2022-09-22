@@ -5,10 +5,14 @@ from torch.nn.functional import normalize
 from torch.utils.data import Dataset,DataLoader
 from torch.utils.data.dataset import Subset
 import numpy as np
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 torch.multiprocessing.set_start_method('spawn')
-save_root_path = "/home/dy/2cp_workspace/2CP/crowdsource_back/back/src/utils/pytorch_cifar10/data/"
+save_root_path = os.environ.get("CIFAR_SAVE_ROOT_PATH")
 model_name = "cifar-10-client-"
 option="data"
 

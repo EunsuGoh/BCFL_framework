@@ -1,9 +1,13 @@
 import h5py
 import torchvision
-save_root_path = "/home/dy/2cp_workspace/2CP/crowdsource_back/back/src/utils/pytorch_cifar10/data/"
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
+save_root_path = os.environ.get("CIFAR_SAVE_ROOT_PATH")
 model_name = "cifar-10-client-"
 option="data"
-# data_path = "/home/dy/2cp_workspace/2CP/crowdsource_back/back/src/utils/pytorch_cifar10/data/cifar-10-batches-py"
+
 trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                         download=True, transform=None)
 print(len(trainset))

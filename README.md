@@ -45,8 +45,8 @@
 3. truffle migrate --network development --reset
 4. cd crowdsource_back/back/src/utils/pytorch_{테스트 하고자하는 데이터}
 5. 데이터 전처리를 안했다면, DATA PREPROCESSING 참고하여 전처리부터 진행
-6. python pytorch_{테스트 하고자하는 데이터}_eval.py
-    **스크립트 내 max_num_updates 변수를 실행하고자 하는 클라이언트 수 만큼 업데이트 후 실행 요망
+6. python pytorch_{테스트 하고자하는 데이터}_eval.py {트레이너 수}
+        i.e.) python pytorch_shakespeare_eval.py 4
 7. 새로운 터미널
 8. python pytorch_{테스트 하고자하는 데이터}_train.py {트레이너 인덱스}
     i.e.) python pytorch_femnist_train.py 1 

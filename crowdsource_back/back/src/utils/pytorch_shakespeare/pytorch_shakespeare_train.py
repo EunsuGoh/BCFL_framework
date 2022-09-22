@@ -20,10 +20,14 @@ import json
 from torch.utils.data.dataset import random_split
 from torch.utils.data.dataset import Subset
 import sys
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 print(sys.argv[1])
-wandb.init(project="2cp",entity="daeyeolkim")
+wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
 
 wandb.run.name = "Shakespeare-Trainer"+sys.argv[1]
 

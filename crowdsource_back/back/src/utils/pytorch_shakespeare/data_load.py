@@ -8,10 +8,14 @@ from torch.utils.data.dataset import Subset
 import torchvision.transforms as transforms
 import json
 import numpy as np
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 torch.multiprocessing.set_start_method('spawn')
-save_root_path = "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_shakespeare/data/user_data/"
+save_root_path = os.environ.get("SHAKESPEARE_SAVE_ROOT_PATH")
 
 
 class MyShakespeare(Dataset):
@@ -53,8 +57,8 @@ class MyShakespeare(Dataset):
 trainers = ["trainer1","trainer2","trainer3","trainer4"]
 evaluator = "evaluator"
 
-train_data_path = "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_shakespeare/data/all_data_0_4_keep_0_train_9.json"
-test_data_path = "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_shakespeare/data/all_data_0_4_keep_0_test_9.json"
+train_data_path = os.environ.get("SHAKESPEARE_TRAIN_DATA_PATH")
+test_data_path = os.environ.get("SHAKESPEARE_TEST_DATA_PATH")
 
 # with open(test_data_path,'r') as f:
 #   jsonfile = json.load(f)
