@@ -1,3 +1,5 @@
 data/
 wandb/
 node_modules/
+__pycache__/
+CIFAR_ToTensor/
