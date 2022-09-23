@@ -22,6 +22,7 @@ from torchvision.transforms import ToTensor
 
 from dotenv import load_dotenv
 import os
+import sys
 
 load_dotenv()
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
@@ -482,7 +483,7 @@ def custom_cifar_crowdsource():
     tf.close()
     eval.set_genesis_model(
         round_duration=ROUND_DURATION,
-        max_num_updates=int(os.environ.get("MAX_NUM_UPDATES"))
+        max_num_updates=int(sys.argv[1])
     )
     eval.evaluate_until(TRAINING_ITERATIONS,EVAL_METHOD)
 custom_cifar_crowdsource()

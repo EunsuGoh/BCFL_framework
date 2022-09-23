@@ -485,6 +485,6 @@ def custom_cifar_crowdsource():
     trainer = CrowdsourceClient(trainer_name,my_train_data,train_targets,ShakespeareLstm,F.cross_entropy,int(sys.argv[1]),eval_contract_addr) #2cp client setting
 
 ## training
-    trainer.train_until(final_round_num=TRAINING_ITERATIONS,batch_size=1,epochs=2,learning_rate=0.001)
+    trainer.train_until(final_round_num=TRAINING_ITERATIONS,batch_size=100,epochs=50,learning_rate=1.4)
     print_token_count(trainer)
 custom_cifar_crowdsource()
