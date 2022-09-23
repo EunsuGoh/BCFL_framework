@@ -301,7 +301,7 @@ class CrowdsourceClient(_GenesisClient):
 
     def _evaluate_model(self, model, *localFlag):
         model = model  # .send(self._worker)
-        print(model)
+        # print(model)
         model.to(device)
         # self._test_loader.to(device)
         model.eval()
@@ -423,7 +423,7 @@ class CrowdsourceClient(_GenesisClient):
 wandb.init(project="2cp",entity="daeyeolkim")
 wandb.run.name = "Shakespeare-Eval-round15"
 
-TRAINING_ITERATIONS = 15
+TRAINING_ITERATIONS = 3
 TRAINING_HYPERPARAMS = {
     'final_round_num': TRAINING_ITERATIONS,
     'batch_size': 64,

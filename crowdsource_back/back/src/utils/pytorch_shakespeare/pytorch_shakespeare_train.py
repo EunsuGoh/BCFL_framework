@@ -33,7 +33,7 @@ wandb.run.name = "Shakespeare-Trainer"+sys.argv[1]
 
 # _hook = sy.TorchHook(torch)
 
-TRAINING_ITERATIONS = 15
+TRAINING_ITERATIONS = 3
 TORCH_SEED = 8888
 EVAL_METHOD = 'step'
 ROUND_DURATION = 1200
