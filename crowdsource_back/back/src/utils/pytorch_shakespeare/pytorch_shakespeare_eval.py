@@ -301,6 +301,7 @@ class CrowdsourceClient(_GenesisClient):
 
     def _evaluate_model(self, model, *localFlag):
         model = model  # .send(self._worker)
+        print(model)
         model.to(device)
         # self._test_loader.to(device)
         model.eval()
@@ -309,6 +310,8 @@ class CrowdsourceClient(_GenesisClient):
             for data, labels in self._test_loader:
                 # data.to(device)
                 pred = model(data)
+                # print("prediction : ",pred)
+                # print("label : ",labels)
                 total_loss += self._criterion(pred, labels
                                               ).item()
                 # ).get().item()
@@ -451,11 +454,11 @@ classes = ('plane', 'car', 'bird', 'cat',
 class ShakespeareLstm(nn.Module):
   def __init__(self): # layer 정의
         super(ShakespeareLstm, self).__init__()
-        self.embed = nn.Embedding(80, 8)
+        self.embed = nn.Embedding(127, 8)
         self.lstm = nn.LSTM(8, 256, 2, batch_first=True)
         # self.h0 = torch.zeros(2, batch_size, 256).requires_grad_()
         self.drop = nn.Dropout()
-        self.out = nn.Linear(256, 80)
+        self.out = nn.Linear(256, 127)
 
   def forward(self, x):
         x = self.embed(x)

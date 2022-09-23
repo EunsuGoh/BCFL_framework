@@ -34,13 +34,6 @@ wandb.run.name = "Shakespeare-Trainer"+sys.argv[1]
 # _hook = sy.TorchHook(torch)
 
 TRAINING_ITERATIONS = 15
-
-TRAINING_HYPERPARAMS = {
-    'final_round_num': TRAINING_ITERATIONS,
-    'batch_size': 64,
-    'epochs': 2,
-    'learning_rate': 0.3,
-}
 TORCH_SEED = 8888
 EVAL_METHOD = 'step'
 ROUND_DURATION = 1200
@@ -440,14 +433,16 @@ classes = ('plane', 'car', 'bird', 'cat',
 class ShakespeareLstm(nn.Module):
   def __init__(self): # layer 정의
         super(ShakespeareLstm, self).__init__()
-        self.embed = nn.Embedding(80, 8)
+        self.embed = nn.Embedding(127, 8)
         self.lstm = nn.LSTM(8, 256, 2, batch_first=True)
         # self.h0 = torch.zeros(2, batch_size, 256).requires_grad_()
         self.drop = nn.Dropout()
-        self.out = nn.Linear(256, 80)
+        self.out = nn.Linear(256, 127)
 
   def forward(self, x):
+        # print("*****",x.shape)
         x = self.embed(x)
+        # print("*****",x.shape)
         # if self.h0.size(1) == x.size(0):
         #     self.h0.data.zero_()
         #     # self.c0.data.zero_()
@@ -481,10 +476,21 @@ def custom_cifar_crowdsource():
         train_targets = train_dataset['y']
     # print(train_data)
     my_train_data = MyShakespeare(train_data, train_targets, True) #dataset custom
-    # print(my_train_data.__getitem__(0))
+
+    # ## 레이블 최대 최소값 확인용
+    # label_list = []
+    # for index in range(0,my_train_data.__len__()):
+    #     x_data, y_data = my_train_data.__getitem__(index)
+    #     label_list.append(int(y_data))
+    
+    # print("max",max(label_list))
+    # print("min",min(label_list))
+    # ##
+
+
     trainer = CrowdsourceClient(trainer_name,my_train_data,train_targets,ShakespeareLstm,F.cross_entropy,int(sys.argv[1]),eval_contract_addr) #2cp client setting
 
 ## training
-    trainer.train_until(final_round_num=TRAINING_ITERATIONS,batch_size=100,epochs=50,learning_rate=1.4)
+    trainer.train_until(final_round_num=TRAINING_ITERATIONS,batch_size=100,epochs=5,learning_rate=1.4)
     print_token_count(trainer)
 custom_cifar_crowdsource()

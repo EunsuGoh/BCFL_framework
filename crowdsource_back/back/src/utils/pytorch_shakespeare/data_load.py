@@ -37,7 +37,7 @@ class MyShakespeare(Dataset):
           # x_data =  x_data.unsqueeze(0)
           x_raw = self.x_data[index]
           x_data = []
-          
+
           # 스트링 데이터를 한 글자씩 ascii로 변경 후 push
           #data
           for element in x_raw:
