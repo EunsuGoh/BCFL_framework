@@ -134,7 +134,7 @@ class CrowdsourceClient(_GenesisClient):
         #     sy.BaseDataset(self._data, self._targets),
         #     batch_size=len(data)
         # )
-        self._test_loader = torch.utils.data.DataLoader(self._data, batch_size=len(data),
+        self._test_loader = torch.utils.data.DataLoader(self._data, batch_size=100,
                                          shuffle=False, num_workers=0)
         ###
         # train loader is defined each time training is run
@@ -309,6 +309,7 @@ class CrowdsourceClient(_GenesisClient):
             total_loss = 0
             for data, labels in self._test_loader:
                 # data.to(device)
+                # print(data.size())
                 pred = model(data)
                 # print("prediction : ",pred)
                 # print("label : ",labels)
