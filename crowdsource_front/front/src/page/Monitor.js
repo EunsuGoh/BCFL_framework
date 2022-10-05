@@ -8,31 +8,21 @@ import serverEndpoint from '../server_setting.json';
 import TextField from '@mui/material/TextField';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import ResultComponent from "../components/ResultComponent"
 
 function Monitor() {
   const navigate = useNavigate();
   const location = useLocation()
-  const [clickedFlag, setClickedFlag] = useState("False")
-  console.log(location.state.globalRounds)
-  
-  useEffect(()=>{
-    console.log(clickedFlag)
-  },[clickedFlag])
+  const [log,setLog] = useState("")
 
   const evalStartFL = async () =>{
-    const setFlag = await axios.post(serverEndpoint.server+'/eval_setFlag')
-    if(setFlag.data.msg){
-      setClickedFlag("True")
       const result = await axios.post(serverEndpoint.server+'/eval_startEval')
       if(result.data.flag){
         window.alert(result.data.msg)
-        setClickedFlag("False")
       }  else{
-        console.log(result.data)
+        setLog(result.data.result)
+    
       }
-    }else{
-      window.alert("Train Falg setting failed")
-    }
   }
   const trainCheckFlag = async () =>{
     const result = await axios.post(serverEndpoint.train+'/train_checkTrainFlag')
@@ -45,9 +35,15 @@ function Monitor() {
   const trainStartFL = async () =>{
     const result = await axios.post(serverEndpoint.train+'/train_startTrain',{index:location.state.train_idx})
     if(result.data){
-    }else{
+      setLog(result.data.result)
+    }else{  
+      console.log("No result")
     }
   }
+  
+  useEffect(()=>{
+    console.log(log)
+  },[log])
 
 
   return (
@@ -90,7 +86,22 @@ function Monitor() {
      }} onClick={trainStartFL}>Participate</Button>
         </Box>}
       </Box>
-      <Box></Box>
+      <Box className = "Logs" sx ={{
+        display:"flex",
+      }}>
+        {/* <div style={{
+          border :"3px dashed navy",
+          padding:"10%",
+          borderRadius:"10px"
+        }}> */}
+          
+        {
+        log.length !==0 ?
+        <ResultComponent flresult={log}/>:null
+        }
+       
+        {/* </div> */}
+      </Box>
     </div>
   );
 }

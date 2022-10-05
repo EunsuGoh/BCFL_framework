@@ -1,9 +1,9 @@
 {
     "evaluator": {
         "model": "shakespeare",
-        "globalRounds": "1",
-        "maxNumUpdates": "1",
-        "trainers": "1",
-        "trainingFlag": "True"
+        "globalRounds": "2",
+        "maxNumUpdates": "2",
+        "trainers": "2",
+        "trainingFlag": "False"
     }
 }

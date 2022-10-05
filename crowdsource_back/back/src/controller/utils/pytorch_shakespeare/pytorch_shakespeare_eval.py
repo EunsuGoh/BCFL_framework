@@ -16,7 +16,6 @@ from ipfs_client import IPFSClient
 from contract_clients import CrowdsourceContractClient
 import shapley
 import wandb
-from utils import print_token_count
 import json
 from torchvision.transforms import ToTensor
 import sys
@@ -25,7 +24,7 @@ import os
 
 load_dotenv()
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
-wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
+# wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
 
 class _BaseClient:
     """
@@ -178,7 +177,7 @@ class CrowdsourceClient(_GenesisClient):
             self.wait_for_txs(txs)
             self._gas_history[r+1] = self.get_gas_used()
             global_loss = self.evaluate_global(r)
-            wandb.log({"global_loss": global_loss})
+            # wandb.log({"global_loss": global_loss})
         self._print(f"Done evaluating. Gas used: {self.get_gas_used()}")
         
 
@@ -317,8 +316,8 @@ class CrowdsourceClient(_GenesisClient):
                 # ).get().item()
         avg_loss = total_loss / len(self._test_loader)
         ##HERE!
-        if localFlag:
-            wandb.log({"avg_loss": avg_loss})
+        # if localFlag:
+            # wandb.log({"avg_loss": avg_loss})
         return avg_loss
 
     def _record_model(self, uploaded_cid, training_round):
@@ -379,15 +378,15 @@ class CrowdsourceClient(_GenesisClient):
                 ########### Trainer 2로만 두고 했으니 유의 바람!!
                 print(idx)
                 print(scores[cid])
-                if idx==0:
-                    wandb.log({"marginal_value_trainer1": scores[cid]})
-                elif idx==1:
-                    wandb.log({"marginal_value_trainer2": scores[cid]})
-                elif idx==2:
-                    wandb.log({"marginal_value_trainer3": scores[cid]})
-                else:
-                    wandb.log({"marginal_value_trainer4": scores[cid]})
-                idx+=1
+                # if idx==0:
+                #     wandb.log({"marginal_value_trainer1": scores[cid]})
+                # elif idx==1:
+                #     wandb.log({"marginal_value_trainer2": scores[cid]})
+                # elif idx==2:
+                #     wandb.log({"marginal_value_trainer3": scores[cid]})
+                # else:
+                #     wandb.log({"marginal_value_trainer4": scores[cid]})
+                # idx+=1
 
         self._print(
             f"Scores in round :{training_round} are :{list(scores.values())}: and cids :{cids}")
@@ -400,7 +399,9 @@ class CrowdsourceClient(_GenesisClient):
         txs = []
         self._print(f"Setting {len(cid_scores.values())} scores...")
         for cid, score in cid_scores.items():
+            
             num_tokens = max(0, int(score * self.TOKENS_PER_UNIT_LOSS))
+            self._print(f"cid :{cid} score :{score}: and tokens :{num_tokens}")
             tx = self._contract.setTokens(cid, num_tokens)
             txs.append(tx)
         return txs
@@ -419,8 +420,8 @@ class CrowdsourceClient(_GenesisClient):
         loss = self._evaluate_model(avg_model,True)
         return start_loss - loss
 
-wandb.init(project="2cp",entity="daeyeolkim")
-wandb.run.name = "Shakespeare-Eval-round5"
+# wandb.init(project="2cp",entity="daeyeolkim")
+# wandb.run.name = "Shakespeare-Eval-round5"
 
 TRAINING_ITERATIONS = 5
 TRAINING_HYPERPARAMS = {

@@ -8,6 +8,14 @@ const corsOptions = {
   origin: '*',
 };
 
+app.use(function (req,res,next) {
+  res.setTimeout(600000, function(){
+    console.log('Request has timed out.');
+        res.send(408);
+    });
+
+  next();
+})
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

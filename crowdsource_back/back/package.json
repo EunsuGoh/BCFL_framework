@@ -6,6 +6,7 @@
   "scripts": {
     "start-eval": "nodemon --watch src/ src/app.js",
     "start-train": "nodemon --watch src/ src/app_train.js",
+    "start-train1": "nodemon --watch src/ src/app_train1.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

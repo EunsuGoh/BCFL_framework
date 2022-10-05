@@ -53,7 +53,7 @@ const eval_setFlag = async(req,res)=>{
   let genesisSetting = curFlTask.evaluator
   genesisSetting.trainingFlag = "True"
   await ciqlJson.open("./src/eval_Fltask.json").set("evaluator",genesisSetting).save()
-
+  
   res.status(200).send({msg:"success"})
 }
 

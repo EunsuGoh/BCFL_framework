@@ -4,3 +4,4 @@ node_modules/
 __pycache__/
 CIFAR_ToTensor/
 .env
+**/server_setting.json

@@ -15,7 +15,6 @@ from ipfs_client import IPFSClient
 from contract_clients import CrowdsourceContractClient, ConsortiumContractClient
 import shapley
 import wandb
-from utils import print_token_count
 import json
 from torch.utils.data.dataset import random_split
 from torch.utils.data.dataset import Subset
@@ -27,9 +26,9 @@ load_dotenv()
 
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 print(sys.argv[1])
-wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
+# wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
 
-wandb.run.name = "Shakespeare-Trainer"+sys.argv[1]
+# wandb.run.name = "Shakespeare-Trainer"+sys.argv[1]
 
 # _hook = sy.TorchHook(torch)
 
@@ -308,7 +307,7 @@ class CrowdsourceClient(_GenesisClient):
                 loss = self._criterion(pred, labels)
                 loss.backward()
                 optimizer.step()
-                wandb.log({"loss": loss})
+                # wandb.log({"loss": loss})
         # model.get()
         return model
 
@@ -378,7 +377,7 @@ class CrowdsourceClient(_GenesisClient):
             scores = {}
             for cid in cids:
                 scores[cid] = self._marginal_value(training_round, cid)
-                wandb.log({"marginal_value": scores[cid]})
+                # wandb.log({"marginal_value": scores[cid]})
 
         self._print(
             f"Scores in round :{training_round} are :{list(scores.values())}: and cids :{cids}")
@@ -427,7 +426,12 @@ class ShakespeareLstm(nn.Module):
         x, hidden = self.lstm(x)
         x = self.drop(x)
         return self.out(x[:, -1, :])
-    
+
+def print_token_count(client):
+    tokens = client.get_token_count()
+    total_tokens = client.get_total_token_count()
+    percent = int(100*tokens/total_tokens) if tokens > 0 else 0
+    print(f"\t\t{client.name} has {tokens} of {total_tokens} tokens ({percent}%)")
 
 def custom_cifar_crowdsource():
     trainset_path = os.path.realpath(os.path.dirname(__file__))+'/data/user_data/'+'trainer'+sys.argv[1]+'_data.json'
@@ -442,7 +446,6 @@ def custom_cifar_crowdsource():
         train_targets = train_dataset['y']
     my_train_data = MyShakespeare(train_data, train_targets, True) #dataset custom
     trainer = CrowdsourceClient(trainer_name,my_train_data,train_targets,ShakespeareLstm,F.cross_entropy,int(sys.argv[1]),eval_contract_addr) #2cp client setting
-
 ## training
     trainer.train_until(final_round_num=int(sys.argv[2]),batch_size=100,epochs=5,learning_rate=1.4)
     print_token_count(trainer)
