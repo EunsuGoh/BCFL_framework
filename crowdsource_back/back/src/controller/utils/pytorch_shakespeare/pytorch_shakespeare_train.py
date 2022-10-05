@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import numpy as np
 from torch.nn.functional import normalize
 import torch.optim as optim
-from data_load import MyMnist
+from data_load import MyShakespeare
 import time
 import methodtools
 import pyvacy.optim
@@ -20,33 +20,24 @@ import json
 from torch.utils.data.dataset import random_split
 from torch.utils.data.dataset import Subset
 import sys
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 print(sys.argv[1])
-wandb.init(project="2cp",entity="daeyeolkim")
+wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
 
-wandb.run.name = "FeMnist-Trainer"+sys.argv[1]
-wandb.config = {
-    "learning_rate": 0.3,
-    "epochs": 10,
-    "batch_size": 64
-    }
+wandb.run.name = "Shakespeare-Trainer"+sys.argv[1]
 
 # _hook = sy.TorchHook(torch)
 
-TRAINING_ITERATIONS = 15
-
-TRAINING_HYPERPARAMS = {
-    'final_round_num': TRAINING_ITERATIONS,
-    'batch_size': 64,
-    'epochs': 2,
-    'learning_rate': 0.3,
-}
+TRAINING_ITERATIONS = 5
 TORCH_SEED = 8888
 EVAL_METHOD = 'step'
 ROUND_DURATION = 1200
 
-save_root_path = "/home/dy/2cp_workspace/2CP/crowdsource_back/back/src/utils/pytorch_cifar10/data/"
 model_name = "cifar-10-client-"
 option="data"
 torch.manual_seed(TORCH_SEED)
@@ -422,48 +413,24 @@ transform = transforms.Compose(
     [transforms.ToTensor(),
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-batch_size = 64
-# # train set load
-# trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-#                                         download=True, transform=transform)
-# trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
-#                                           shuffle=True, num_workers=2)
 
-# #test set load
-# testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-#                                        download=True, transform=transform)
-# testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-#                                          shuffle=False, num_workers=2)
-
-classes = ('plane', 'car', 'bird', 'cat',
-           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
-class FeMnistNet(nn.Module):
-  def __init__(self): 
-        super(FeMnistNet, self).__init__()
-        # input size = 28x28 
-        self.conv1 = nn.Conv2d(1, 10, kernel_size=5) # input channel = 1, filter = 10, kernel size = 5, zero padding = 0, stribe = 1
-        # ((W-K+2P)/S)+1 공식으로 인해 ((28-5+0)/1)+1=24 -> 24x24로 변환
-        # maxpooling하면 12x12
-        self.conv2 = nn.Conv2d(10, 20, kernel_size=5) # input channel = 1, filter = 10, kernel size = 5, zero padding = 0, stribe = 1
-        # ((12-5+0)/1)+1=8 -> 8x8로 변환
-        # maxpooling하면 4x4
-        self.drop2D = nn.Dropout2d(p=0.25, inplace=False) # 랜덤하게 뉴런을 종료해서 학습을 방해해 학습이 학습용 데이터에 치우치는 현상을 막기 위해 사용
-        self.mp = nn.MaxPool2d(2)  # 오버피팅을 방지하고, 연산에 들어가는 자원을 줄이기 위해 maxpolling
-        self.fc1 = nn.Linear(320,100) # 4x4x20 vector로 flat한 것을 100개의 출력으로 변경
-        self.fc2 = nn.Linear(100,62) # 100개의 출력을 10개의 출력으로 변경
+class ShakespeareLstm(nn.Module):
+  def __init__(self): # layer 정의
+        super(ShakespeareLstm, self).__init__()
+        self.embed = nn.Embedding(127, 8)
+        self.lstm = nn.LSTM(8, 256, 2, batch_first=True)
+        self.drop = nn.Dropout()
+        self.out = nn.Linear(256, 127)
 
   def forward(self, x):
-        x = F.relu(self.mp(self.conv1(x))) # convolution layer 1번에 relu를 씌우고 maxpool, 결과값은 12x12x10
-        x = F.relu(self.mp(self.conv2(x))) # convolution layer 2번에 relu를 씌우고 maxpool, 결과값은 4x4x20
-        x = self.drop2D(x)
-        x = x.view(x.size(0), -1) # flat
-        x = self.fc1(x) # fc1 레이어에 삽입
-        x = self.fc2(x) # fc2 레이어에 삽입
-        return F.log_softmax(x) # fully-connected layer에 넣고 logsoftmax 적용
+        x = self.embed(x)
+        x, hidden = self.lstm(x)
+        x = self.drop(x)
+        return self.out(x[:, -1, :])
+    
 
 def custom_cifar_crowdsource():
-    trainset_path = '/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/'+'trainer'+sys.argv[1]+'_data.json'
+    trainset_path = os.path.realpath(os.path.dirname(__file__))+'/data/user_data/'+'trainer'+sys.argv[1]+'_data.json'
     tf = open("eval_contract.json","r")
     new_dict = json.load(tf)
     eval_contract_addr = new_dict["eval_cont_addr"]
@@ -473,12 +440,10 @@ def custom_cifar_crowdsource():
         train_dataset = json.load(f)
         train_data = train_dataset['x']
         train_targets = train_dataset['y']
-    # print(train_data)
-    my_train_data = MyMnist(train_data, train_targets, True) #dataset custom
-    # print(my_train_data.__getitem__(0))
-    trainer = CrowdsourceClient(trainer_name,my_train_data,train_targets,FeMnistNet,F.cross_entropy,int(sys.argv[1]),eval_contract_addr) #2cp client setting
+    my_train_data = MyShakespeare(train_data, train_targets, True) #dataset custom
+    trainer = CrowdsourceClient(trainer_name,my_train_data,train_targets,ShakespeareLstm,F.cross_entropy,int(sys.argv[1]),eval_contract_addr) #2cp client setting
 
 ## training
-    trainer.train_until(final_round_num=TRAINING_ITERATIONS,batch_size=1,epochs=2,learning_rate=0.001)
+    trainer.train_until(final_round_num=int(sys.argv[2]),batch_size=100,epochs=5,learning_rate=1.4)
     print_token_count(trainer)
 custom_cifar_crowdsource()
