@@ -12337,10 +12337,16 @@
       "links": {},
       "address": "0x67EF8f767398582BF37bF57700878beA564C27b0",
       "transactionHash": "0x2a8c250e742b5a393d43230269e8ba01edc9c53b0b19753ab2f295ffd8d02152"
+    },
+    "1664972778073": {
+      "events": {},
+      "links": {},
+      "address": "0x766C5bf01F7Aa470A253d7FB3BE13149d2f2Dd2e",
+      "transactionHash": "0xe75d08784deec7dde2709e2253f02dc0ffad292c7681ee130b41bd21334b991a"
     }
   },
   "schemaVersion": "3.4.8",
-  "updatedAt": "2022-10-05T06:55:57.885Z",
+  "updatedAt": "2022-10-05T12:26:45.003Z",
   "networkType": "ethereum",
   "devdoc": {
     "author": "Harry Cai",
