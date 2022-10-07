@@ -39,7 +39,7 @@
 - ipfs daemon
 - truffle
 
-# run teset crowdsource code (단일 스크립트 실행)
+# run test crowdsource code (단일 스크립트 실행)
 1. ganache-cli --port=7545
 2. ipfs daemon
 3. truffle migrate --network development --reset
@@ -52,3 +52,10 @@
     i.e.) python pytorch_femnist_train.py 1 
         (주의 : 트레이너 인덱스 1부터 시작)
 
+# run test crowdsource code with front page
+1. ganache-cli --port=7545
+2. ipfs daemon
+3. truffle migrate --network development --reset
+4. cd crowdsource_back/back
+5. npm run start-eval
+6. cd crowdsource_back/back (new terminal open)
