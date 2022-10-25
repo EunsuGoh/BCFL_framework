@@ -475,14 +475,7 @@ class ShakespeareLstm(nn.Module):
         # x = x.contiguous().view(-1, 256)
         # x = x.contiguous().view(-1, 256)
         return self.out(x[:, -1, :])
-    
-    # def init_hidden(self, batch_size):
-    #     weight = next(self.parameters()).data
-    #
-    #     initial_hidden = (weight.new(2, batch_size, 256).zero_(),
-    #                       weight.new(2, batch_size, 256).zero_())
-    #
-    #     return initial_hidden
+
 
 def custom_cifar_crowdsource():
     testset_path = os.path.realpath(os.path.dirname(__file__))+'/data/user_data/evaluator_data.json'

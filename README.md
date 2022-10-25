@@ -13,6 +13,8 @@
     - `pytorch_femnist/` : non-iid FeMnist 데이터 / 모델 포함
     - `pytorch_shakespeare/` : non-iid shakespeare 데이터 / 모델 포함
 
+# PYTHONPATH
+
 # ANACONDA ENV
 - 아나콘다 가상환경 추천
 - 가상환경 생성 및 활성화 후
