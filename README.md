@@ -28,6 +28,11 @@
     1. pip install -r requirement.txt
 
 ## DATA
+- you should save your data below consortium/data/user_data or crowdsource/data/user_data
+- ex) consortium/data/user_data/trainer1_data.json
+- ex)  crowdsource/data/user_data/evaluator_data.json
+
+## EXPERIMENT DATA
 - mnist : torchvision dataset (preprocess + data_load)
 - femnist, shakespeare : leaf dataset (data_load)
     femnist : ./preprocess.sh -s niid --iu 4 --sf 0.2  -k 0 -t user -tf 0.8

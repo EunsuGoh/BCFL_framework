@@ -21,11 +21,14 @@ torch.manual_seed(TORCH_SEED)
 
 def test_crowdsource():
   # Define Eval data
+  # your testset Path
     testset_path = os.path.realpath(os.path.dirname(__file__))+'/data/user_data/evaluator_data.json'
     with open(testset_path,'r') as f:
         eval_dataset = json.load(f)
         eval_data = eval_dataset['x']
         eval_targets = eval_dataset['y']
+
+    print(eval_data)
     my_eval_data = MyData(eval_data, eval_targets, True)
 
   # Evaluator client setting
@@ -42,6 +45,7 @@ def test_crowdsource():
     for trainer in trainers :
         print("client is deploying....")
         trainer_index = trainer[-1:]
+        # your trainset Path
         trainset_path = os.path.realpath(os.path.dirname(__file__))+'/data/user_data/'+trainer+'_data.json'
         with open(trainset_path,'r') as f:
             train_dataset = json.load(f)

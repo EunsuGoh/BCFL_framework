@@ -24,7 +24,6 @@ import os
 
 load_dotenv()
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
-# wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
 
 class _BaseClient:
     """

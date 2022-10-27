@@ -32,6 +32,7 @@ def test_consortium():
     for trainer in trainers :
         print("client is deploying....")
         trainer_index = trainer[-1:]
+        # your trainset path
         trainset_path = os.path.realpath(os.path.dirname(__file__))+'/data/user_data/'+trainer+'_data.json'
         with open(trainset_path,'r') as f:
             train_dataset = json.load(f)
