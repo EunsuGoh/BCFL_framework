@@ -7,13 +7,18 @@
 
 `migrations/`: 트러플 스마트 컨트랙트 배포용 폴더
 
+`crowdsource` : 크라우드소스 테스트 파이썬 코드 포함
+
+`consortium` : 컨소시움 시나리오 테스트 파이썬 코드 포함
+
 `crowdsource_back/`: 크라우드소스 시나리오 테스트용 백엔드
     - `pytorch_cifar10/` : iid cifar-10 데이터 / 모델 포함
     - `pytorch_mnist/` : iid mnist 데이터 / 모델 포함
     - `pytorch_femnist/` : non-iid FeMnist 데이터 / 모델 포함
     - `pytorch_shakespeare/` : non-iid shakespeare 데이터 / 모델 포함
 
-# PYTHONPATH
+# Add 2cp TO PYTHONPATH
+- conda develop 2cp
 
 # ANACONDA ENV
 - 아나콘다 가상환경 추천
@@ -23,13 +28,13 @@
 - requirement 다운로드 (** 주의, 파이토치-토치비전 본인 환경에 맞는 버전으로 받을 것)
     1. pip install -r requirement.txt
 
-# DATA
+## DATA
 - cifar-10, mnist : torchvision 데이터셋 사용 (preprocess + data_load)
 - femnist, shakespeare : leaf 데이터셋 사용 (data_load)
     femnist : ./preprocess.sh -s niid --iu 4 --sf 0.2  -k 0 -t user -tf 0.8
     shakespeare : ./preprocess.sh -s niid --iu 4 --sf 0.4  -k 0 -t user -tf 0.8
 
-# DATA PREPROCESSING
+## DATA PREPROCESSING
 - cifar-10, mnist
     step 1. python data_preprocess.py
 - shakespeare, femnist 
@@ -41,7 +46,34 @@
 - ipfs daemon
 - truffle
 
-# run test crowdsource code (단일 스크립트 실행)
+
+
+
+# run test consortium code
+1. ganache-cli --port=7545 --networkId 5777
+2. ipfs daemon
+3. truffle migrate --network development --reset
+4. cd consortium
+5. Edit consortium_conf.py
+6. python test_consortium.py
+
+# run test crowdsourcr code
+1. ganache-cli --port=7545 --networkId 5777
+2. ipfs daemon
+3. truffle migrate --network development --reset
+4. cd crowdsource
+5. Edit crowdsource_conf.py
+6. python test_consortium.py
+
+# run test crowdsource code with front page
+1. ganache-cli --port=7545
+2. ipfs daemon
+3. truffle migrate --network development --reset
+4. cd crowdsource_back/back
+5. npm run start-eval
+6. cd crowdsource_back/back (new terminal open)
+
+## run test crowdsource code (단일 스크립트 실행)
 1. ganache-cli --port=7545
 2. ipfs daemon
 3. truffle migrate --network development --reset
@@ -53,19 +85,3 @@
 8. python pytorch_{테스트 하고자하는 데이터}_train.py {트레이너 인덱스}
     i.e.) python pytorch_femnist_train.py 1 
         (주의 : 트레이너 인덱스 1부터 시작)
-
-# run test crowdsource code with front page
-1. ganache-cli --port=7545
-2. ipfs daemon
-3. truffle migrate --network development --reset
-4. cd crowdsource_back/back
-5. npm run start-eval
-6. cd crowdsource_back/back (new terminal open)
-
-# run test consortium code
-1. ganache-cli --port=7545 --networkId 5777
-2. ipfs daemon
-3. truffle migrate --network development --reset
-4. cd consortium
-5. Edit consortium_conf.py
-6. python test_consortium.py
