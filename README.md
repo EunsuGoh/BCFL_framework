@@ -61,3 +61,11 @@
 4. cd crowdsource_back/back
 5. npm run start-eval
 6. cd crowdsource_back/back (new terminal open)
+
+# run test consortium code
+1. ganache-cli --port=7545 --networkId 5777
+2. ipfs daemon
+3. truffle migrate --network development --reset
+4. cd consortium
+5. Edit consortium_conf.py
+6. python test_consortium.py

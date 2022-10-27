@@ -9,5 +9,5 @@ config=\
     },
     'NUMBER_OF_TRAINERS':3,
     'EVAL_METHOD':'step',
-    'ROUND_DURATION':60
+    'ROUND_DURATION':30000
   }

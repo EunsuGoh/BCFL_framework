@@ -66,7 +66,6 @@ class _BaseContractClient(BaseEthClient):
                     tx_receipt = self.wait_for_tx(tx_hash) 
                     address = tx_receipt.contractAddress
                 else:
-                    print(crt_json['networks'])
                     address = crt_json['networks'][self.NETWORK_ID]['address']
         instance = self._w3.eth.contract(
             abi=abi,
