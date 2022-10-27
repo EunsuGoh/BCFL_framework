@@ -15,7 +15,7 @@ from ipfs_client import IPFSClient
 from contract_clients import CrowdsourceContractClient, ConsortiumContractClient
 import shapley
 import wandb
-from utils import print_token_count
+from utils_2cp import print_token_count
 import json
 from torch.utils.data.dataset import random_split
 from torch.utils.data.dataset import Subset
