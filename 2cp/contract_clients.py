@@ -1,5 +1,5 @@
 import json
-
+import os
 import base58
 from web3 import HTTPProvider, Web3
 
@@ -66,6 +66,7 @@ class _BaseContractClient(BaseEthClient):
                     tx_receipt = self.wait_for_tx(tx_hash) 
                     address = tx_receipt.contractAddress
                 else:
+                    print(crt_json['networks'])
                     address = crt_json['networks'][self.NETWORK_ID]['address']
         instance = self._w3.eth.contract(
             abi=abi,
@@ -96,11 +97,12 @@ class CrowdsourceContractClient(_BaseContractClient):
     def __init__(self, account_idx, address, deploy):
         super().__init__(
             # "build/contracts/Crowdsource.json",
-            "/home/dy/2cp_workspace/2CP/build/contracts/Crowdsource.json",
+            os.path.realpath(os.path.dirname(__file__))[0:-3]+"build/contracts/Crowdsource.json",
             account_idx,
             address,
             deploy
         )
+        
 
     def evaluator(self):
         return self._contract.functions.evaluator().call()
@@ -169,7 +171,7 @@ class ConsortiumContractClient(_BaseContractClient):
 
     def __init__(self, account_idx, address, deploy):
         super().__init__(
-            "build/contracts/Consortium.json",
+            os.path.realpath(os.path.dirname(__file__))[0:-3]+"build/contracts/Consortium.json",
             account_idx,
             address,
             deploy

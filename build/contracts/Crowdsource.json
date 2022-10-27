@@ -12080,6 +12080,12 @@
     "version": "0.5.1+commit.c8a2cb62.Emscripten.clang"
   },
   "networks": {
+    "5777": {
+      "events": {},
+      "links": {},
+      "address": "0x50D70C6DEAe126A1868296c67d145f762235e0FE",
+      "transactionHash": "0x2a041b00d45927203ea3c7a852ce7ef9ba6cd8e87bac13fad4cdb324f564b0f1"
+    },
     "1657456539790": {
       "events": {},
       "links": {},
@@ -12391,10 +12397,22 @@
       "links": {},
       "address": "0x7022a0FeD9f9aA7152953698fb2336689D85323A",
       "transactionHash": "0x454354246f1b839e4c312eb77157c5f24f617218ef543abbf5e3aeb77c2e9f71"
+    },
+    "1666663996438": {
+      "events": {},
+      "links": {},
+      "address": "0x68cd51C32F9ff2C17f4193Ba2fEc36B7b7E976A9",
+      "transactionHash": "0x56685e1cf66b60f0db640cf8100fb4abd4e21cb13cee3db4dd87c9657dc7057f"
+    },
+    "1666837750909": {
+      "events": {},
+      "links": {},
+      "address": "0x6da080BE86BE9E41095A41E75c15F686B54f93Ca",
+      "transactionHash": "0xc910383168a946d4b346169ea9570a7f86f8e7551f9f21cf81dcc0675c401cc0"
     }
   },
   "schemaVersion": "3.4.8",
-  "updatedAt": "2022-10-19T06:28:56.243Z",
+  "updatedAt": "2022-10-27T05:25:08.562Z",
   "networkType": "ethereum",
   "devdoc": {
     "author": "Harry Cai",

@@ -1,19 +1,30 @@
-import threading
+import torch
+import torchvision
+import torchvision.transforms as transforms
+import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
+from torch.nn.functional import normalize
+import torch.optim as optim
+# from data_load import MyShakespeare
 import time
-
 import methodtools
-
-import syft as sy
 import torch
 import pyvacy.optim
 from pyvacy.analysis import moments_accountant as epsilon
-
 from ipfs_client import IPFSClient
 from contract_clients import CrowdsourceContractClient, ConsortiumContractClient
 import shapley
+import wandb
+import json
+from torchvision.transforms import ToTensor
+import sys
+import os
+import threading
 
-_hook = sy.TorchHook(torch)
 
+device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+# wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
 
 class _BaseClient:
     """
@@ -72,7 +83,9 @@ class _GenesisClient(_BaseClient):
         """
         self._print("Setting genesis...")
         genesis_model = self._model_constructor()
+        # genesis_model.to(device)
         genesis_cid = self._upload_model(genesis_model)
+        self._print(f"Genesis model cid : {genesis_cid}")
         tx = self._contract.setGenesis(
             genesis_cid, round_duration, max_num_updates)
         self.wait_for_txs([tx])
@@ -88,6 +101,8 @@ class CrowdsourceClient(_GenesisClient):
     Full client for the Crowdsource Protocol.
     """
 
+    
+
     TOKENS_PER_UNIT_LOSS = 1e18  # same as the number of wei per ether
     CURRENT_ROUND_POLL_INTERVAL = 1.  # Ganache can't mine quicker than once per second
 
@@ -98,28 +113,51 @@ class CrowdsourceClient(_GenesisClient):
                          account_idx,
                          contract_address,
                          deploy)
-        self.data_length = min(len(data), len(targets))
+        self.data_length = data.__len__()
+        
 
-        self._worker = sy.VirtualWorker(_hook, id=name)
+        # self._worker = sy.VirtualWorker(_hook, id=name)
         self._criterion = model_criterion
         # TODO: should actually send these to the syft worker.
         # Temporarily stopped doing this as a workaround for subtle multithreading bugs
         # in order to run experiments on contributivity
+        # data.to(device)
+        # targets.to(device)
         self._data = data  # .send(self._worker)
         self._targets = targets  # .send(self._worker)
-        self._test_loader = torch.utils.data.DataLoader(
-            sy.BaseDataset(self._data, self._targets),
-            batch_size=len(data)
-        )
+        # self._data.to(device)
+        # self._targets.to(device)
+        ###테스트 로더 수정
+        # self._test_loader = torch.utils.data.DataLoader(
+        #     sy.BaseDataset(self._data, self._targets),
+        #     batch_size=len(data)
+        # )
+        self._test_loader = torch.utils.data.DataLoader(self._data, batch_size=len(data),
+                                         shuffle=False, num_workers=0)
+        ###
         # train loader is defined each time training is run
-        
         self._gas_history = {}
+
+    def train_one_round(self, batch_size, epochs, learning_rate, dp_params=None):
+        cur_round = self._contract.currentRound()
+        print("cur_round : ",cur_round)
+        tx,model = self._train_single_round(
+            cur_round,
+            batch_size,
+            epochs,
+            learning_rate,
+            dp_params
+        )
+        self.wait_for_txs([tx])
+        self._gas_history[cur_round] = self.get_gas_used()
+        self._print(f"Done training. Gas used: {self.get_gas_used()}")
 
     def train_until(self, final_round_num, batch_size, epochs, learning_rate, dp_params=None):
         start_round = self._contract.currentRound()
+        # print(start_round)
         for r in range(start_round, final_round_num+1):
             self.wait_for_round(r)
-            tx = self._train_single_round(
+            tx,model = self._train_single_round(
                 r,
                 batch_size,
                 epochs,
@@ -138,7 +176,10 @@ class CrowdsourceClient(_GenesisClient):
             txs = self._set_tokens(scores)
             self.wait_for_txs(txs)
             self._gas_history[r+1] = self.get_gas_used()
+            global_loss = self.evaluate_global(r)
+            # wandb.log({"global_loss": global_loss})
         self._print(f"Done evaluating. Gas used: {self.get_gas_used()}")
+        
 
     def is_evaluator(self):
         return self._contract.evaluator() == self._contract.address
@@ -209,15 +250,20 @@ class CrowdsourceClient(_GenesisClient):
         model = self._train_model(
             model, batch_size, epochs, learning_rate, dp_params)
         uploaded_cid = self._upload_model(model)
-        self._print(f"Adding model update...")
+        self._print(f"Adding model update..., local model cid : {uploaded_cid}, round : {round_num}")
         tx = self._record_model(uploaded_cid, round_num)
-        return tx
+        return tx,model
 
     def _train_model(self, model, batch_size, epochs, lr, dp_params):
-        train_loader = torch.utils.data.DataLoader(
-            sy.BaseDataset(self._data, self._targets),
-            batch_size=batch_size)
+        ### train 데이터 로더 수정
+        # train_loader = torch.utils.data.DataLoader(
+        #     sy.BaseDataset(self._data, self._targets),
+        #     batch_size=batch_size)
+        train_loader = torch.utils.data.DataLoader(self._data, batch_size=batch_size,
+                                          shuffle=True, num_workers=0)
+        ###
         # model = model.send(self._worker)
+        model.to(device)
         model.train()
         if dp_params is not None:
             eps = epsilon(
@@ -238,7 +284,8 @@ class CrowdsourceClient(_GenesisClient):
         else:
             optimizer = torch.optim.SGD(
                 params=model.parameters(),
-                lr=lr
+                lr=lr,
+                momentum=0.9
             )
         for epoch in range(epochs):
             for data, labels in train_loader:
@@ -247,20 +294,32 @@ class CrowdsourceClient(_GenesisClient):
                 loss = self._criterion(pred, labels)
                 loss.backward()
                 optimizer.step()
+                # wandb.watch(model)
+                # wandb.log({"loss": loss})
         # model.get()
         return model
 
-    def _evaluate_model(self, model):
+    def _evaluate_model(self, model, *localFlag):
         model = model  # .send(self._worker)
+        # print(model)
+        model.to(device)
+        # self._test_loader.to(device)
         model.eval()
         with torch.no_grad():
             total_loss = 0
             for data, labels in self._test_loader:
+                # data.to(device)
+                # print(data.size())
                 pred = model(data)
+                # print("prediction : ",pred)
+                # print("label : ",labels)
                 total_loss += self._criterion(pred, labels
                                               ).item()
                 # ).get().item()
         avg_loss = total_loss / len(self._test_loader)
+        ##HERE!
+        # if localFlag:
+            # wandb.log({"avg_loss": avg_loss})
         return avg_loss
 
     def _record_model(self, uploaded_cid, training_round):
@@ -291,6 +350,7 @@ class CrowdsourceClient(_GenesisClient):
 
     def _avg_model(self, models):
         avg_model = self._model_constructor()
+        # avg_model.to(device)
         with torch.no_grad():
             for params in avg_model.parameters():
                 params *= 0
@@ -314,11 +374,24 @@ class CrowdsourceClient(_GenesisClient):
                 characteristic_function, cids)
         if method == 'step':
             scores = {}
+            idx = 0
             for cid in cids:
                 scores[cid] = self._marginal_value(training_round, cid)
+                ########### Trainer 2로만 두고 했으니 유의 바람!!
+                print(idx)
+                print(scores[cid])
+                # if idx==0:
+                #     wandb.log({"marginal_value_trainer1": scores[cid]})
+                # elif idx==1:
+                #     wandb.log({"marginal_value_trainer2": scores[cid]})
+                # elif idx==2:
+                #     wandb.log({"marginal_value_trainer3": scores[cid]})
+                # else:
+                #     wandb.log({"marginal_value_trainer4": scores[cid]})
+                # idx+=1
 
         self._print(
-            f"Scores in round {training_round} are {list(scores.values())}")
+            f"Scores in round :{training_round} are :{list(scores.values())}: and cids :{cids}")
         return scores
 
     def _set_tokens(self, cid_scores):
@@ -329,6 +402,7 @@ class CrowdsourceClient(_GenesisClient):
         self._print(f"Setting {len(cid_scores.values())} scores...")
         for cid, score in cid_scores.items():
             num_tokens = max(0, int(score * self.TOKENS_PER_UNIT_LOSS))
+            self._print(f"cid :{cid} score :{score}: and tokens :{num_tokens}")
             tx = self._contract.setTokens(cid, num_tokens)
             txs.append(tx)
         return txs
@@ -344,9 +418,8 @@ class CrowdsourceClient(_GenesisClient):
         start_loss = self.evaluate_global(training_round)
         models = self._get_models(update_cids)
         avg_model = self._avg_model(models)
-        loss = self._evaluate_model(avg_model)
+        loss = self._evaluate_model(avg_model,True)
         return start_loss - loss
-
 
 class ConsortiumSetupClient(_GenesisClient):
     """
@@ -494,3 +567,6 @@ class ConsortiumClient(_BaseClient):
         aux_clients = self._get_aux_clients()
         return [
             aux for aux in aux_clients if aux.is_evaluator()]
+
+
+

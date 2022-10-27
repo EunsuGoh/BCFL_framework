@@ -3,11 +3,12 @@ import threading
 import torch
 import torch.nn.functional as F
 from clients import ConsortiumSetupClient, ConsortiumClient
-from utils import print_token_count
+from utils_2cp import print_token_count
 
 from test_utils.xor import XORDataset, XORModel
 from test_utils.functions import same_weights
 from consortium_conf import config
+import sys
 
 TRAINING_ITERATIONS = config['TRAINING_ITERATIONS']
 TRAINING_HYPERPARAMS = config['TRAINING_HYPERPARAMS']
@@ -31,29 +32,23 @@ def test_consortium():
     trainers = []
     genesis = ConsortiumSetupClient("Genesis", XORModel, 0, deploy=True)
     for number in range(config['NUMBER_OF_TRAINERS']):
-        print("hi")
-    bob = ConsortiumClient(
-        "Bob", bob_data, bob_targets, XORModel, F.mse_loss, 1,
-        contract_address=genesis.contract_address)
-    charlie = ConsortiumClient(
-        "Charlie", charlie_data, charlie_targets, XORModel, F.mse_loss, 2,
-        contract_address=genesis.contract_address)
-    david = ConsortiumClient(
-        "David", david_data, david_targets, XORModel, F.mse_loss, 3,
-        contract_address=genesis.contract_address)
-    
+        trainer_index = "trainer"+str(number+1)
+        trainers.append(trainer_index)
 
-    trainers = [bob,
-                charlie,
-                david]
+    train_clients = []
+    for trainer in trainers :
+        trainer_index = trainer[-1:]
+        train_client = ConsortiumClient(trainer,bob_data,bob_targets,XORModel, F.mse_loss,int(trainer_index))
+        train_clients.append(train_client)
+    
 
     genesis.set_genesis_model(
         round_duration=ROUND_DURATION,
-        max_num_updates=len(trainers)
+        max_num_updates=config['NUMBER_OF_TRAINERS']
     )
 
     genesis.add_auxiliaries([
-        trainer.address for trainer in trainers
+        trainer.address for trainer in train_clients
     ])
 
     # Training
@@ -62,7 +57,7 @@ def test_consortium():
             target=trainer.train_until,
             kwargs=TRAINING_HYPERPARAMS,
             daemon=True
-        ) for trainer in trainers
+        ) for trainer in train_clients
     ]
 
     # Evaluation
@@ -71,7 +66,7 @@ def test_consortium():
             target=trainer.evaluate_until,
             args=(TRAINING_ITERATIONS, EVAL_METHOD),
             daemon=True
-        ) for trainer in trainers
+        ) for trainer in train_clients
     ])
 
     # Run all threads in parallel
@@ -80,9 +75,9 @@ def test_consortium():
     for t in threads:
         t.join()
 
-    print_token_count(bob)
-    print_token_count(charlie)
-    print_token_count(david)
+    # print_token_count(bob)
+    # print_token_count(charlie)
+    # print_token_count(david)
 
     # assert bob.get_token_count() > 0, "Bob ended up with 0 tokens"
     # assert charlie.get_token_count() > 0, "Charlie ended up with 0 tokens"
@@ -98,3 +93,5 @@ def test_consortium():
     # assert str(bob_global_model.state_dict()) == \
     #     str(charlie_global_model.state_dict()), \
     #     "Bob and Charlie ran the same aggregation but got different model dicts"
+
+test_consortium()
