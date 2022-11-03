@@ -8,6 +8,6 @@ config=\
     'learning_rate': 0.3,
     },
     'NUMBER_OF_TRAINERS':3,
-    'EVAL_METHOD':'step',
+    'EVAL_METHOD':'shapley',
     'ROUND_DURATION':30000
   }

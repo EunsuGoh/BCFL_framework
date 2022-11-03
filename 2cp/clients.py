@@ -377,18 +377,9 @@ class CrowdsourceClient(_GenesisClient):
             idx = 0
             for cid in cids:
                 scores[cid] = self._marginal_value(training_round, cid)
-                ########### Trainer 2로만 두고 했으니 유의 바람!!
                 print(idx)
                 print(scores[cid])
-                # if idx==0:
-                #     wandb.log({"marginal_value_trainer1": scores[cid]})
-                # elif idx==1:
-                #     wandb.log({"marginal_value_trainer2": scores[cid]})
-                # elif idx==2:
-                #     wandb.log({"marginal_value_trainer3": scores[cid]})
-                # else:
-                #     wandb.log({"marginal_value_trainer4": scores[cid]})
-                # idx+=1
+
 
         self._print(
             f"Scores in round :{training_round} are :{list(scores.values())}: and cids :{cids}")
