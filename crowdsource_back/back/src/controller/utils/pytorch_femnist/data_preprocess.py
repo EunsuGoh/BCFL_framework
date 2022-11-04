@@ -5,7 +5,6 @@ import torchvision.transforms as transforms
 save_root_path = "crowdsource_back/back/src/utils/pytorch_mnist/data/MNIST/MNIST"
 model_name = "mnist-client-"
 option="data"
-# data_path = "/home/dy/2cp_workspace/2CP/crowdsource_back/back/src/utils/pytorch_cifar10/data/cifar-10-batches-py"
 
 trainset = torchvision.datasets.MNIST(
     root = './data/MNIST',

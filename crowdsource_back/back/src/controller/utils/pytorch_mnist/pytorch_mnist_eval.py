@@ -435,7 +435,7 @@ TORCH_SEED = 8888
 EVAL_METHOD = 'step'
 ROUND_DURATION = 30000
 
-save_root_path = "/home/dy/2cp_workspace/2CP/crowdsource_back/back/src/utils/pytorch_cifar10/data/"
+
 model_name = "cifar-10-client-"
 option="data"
 torch.manual_seed(TORCH_SEED)

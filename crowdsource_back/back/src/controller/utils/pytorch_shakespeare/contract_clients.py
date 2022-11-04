@@ -95,7 +95,7 @@ class CrowdsourceContractClient(_BaseContractClient):
 
     def __init__(self, account_idx, address, deploy):
         super().__init__(
-            "/home/dy/2cp_workspace/2CP/build/contracts/Crowdsource.json",
+            "build/contracts/Crowdsource.json",
             account_idx,
             address,
             deploy
