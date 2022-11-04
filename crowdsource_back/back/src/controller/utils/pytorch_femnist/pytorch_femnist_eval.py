@@ -478,7 +478,7 @@ class FeMnistNet(nn.Module):
         return F.log_softmax(x) # fully-connected layer에 넣고 logsoftmax 적용
 
 def custom_cifar_crowdsource():
-    testset_path = '/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/evaluator_data.json'
+    testset_path = 'crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/evaluator_data.json'
     with open(testset_path,'r') as f:
         eval_dataset = json.load(f)
         eval_data = eval_dataset['x']

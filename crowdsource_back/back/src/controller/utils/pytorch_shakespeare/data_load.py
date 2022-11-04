@@ -69,7 +69,7 @@ test_data_path = os.environ.get("SHAKESPEARE_TEST_DATA_PATH")
 #   print("sum of datas : ",sum(jsonfile["num_samples"]))
 
 """ 데이터 생성이 필요할 시 주석 해제하고 사용 """
-# with open("/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_shakespeare/data/user_data/"+str(evaluator)+"_data.json","w") as f:
+# with open("crowdsource_back/back/src/utils/pytorch_shakespeare/data/user_data/"+str(evaluator)+"_data.json","w") as f:
 #     json_format = {
 #       "name": evaluator,
 #       "x":[],
@@ -77,7 +77,7 @@ test_data_path = os.environ.get("SHAKESPEARE_TEST_DATA_PATH")
 #     }
 #     json.dump(json_format,f)
 # for trainer in trainers:
-#   with open("/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_shakespeare/data/user_data/"+str(trainer)+"_data.json","w") as f:
+#   with open("crowdsource_back/back/src/utils/pytorch_shakespeare/data/user_data/"+str(trainer)+"_data.json","w") as f:
 #     json_format = {
 #       "name": trainer,
 #       "x":[],
@@ -93,7 +93,7 @@ test_data_path = os.environ.get("SHAKESPEARE_TEST_DATA_PATH")
 #   user_data = data_json['user_data']
 #   print("users length : ",len(users))
 #   print("sum of test datas : ",sum(data_json["num_samples"]))
-#   save_file_path = "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_shakespeare/data/user_data/"
+#   save_file_path = "crowdsource_back/back/src/utils/pytorch_shakespeare/data/user_data/"
 #   for idx in range(len(users)):  
 #     client_data = user_data[users[idx]]
 #     client_data_x = client_data["x"]
@@ -116,7 +116,7 @@ test_data_path = os.environ.get("SHAKESPEARE_TEST_DATA_PATH")
 #   user_data = data_json['user_data']
 #   print("users length : ",len(users))
 #   print("sum of train datas : ",sum(data_json["num_samples"]))
-#   save_file_path = "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_shakespeare/data/user_data/"
+#   save_file_path = "crowdsource_back/back/src/utils/pytorch_shakespeare/data/user_data/"
 #   for idx in range(len(users)):  
 #     client_data = user_data[users[idx]]
 #     client_data_x = client_data["x"]
@@ -181,7 +181,7 @@ test_data_path = os.environ.get("SHAKESPEARE_TEST_DATA_PATH")
 #     json.dump(json_object,f)
 
 # for user in users:
-#   with open("/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"+str(user)+"_data.json",'r') as f:
+#   with open("crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"+str(user)+"_data.json",'r') as f:
 #     user_json = json.load(f)
 #     print(len(user_json["x"]))
 #     print(user_json["y"])

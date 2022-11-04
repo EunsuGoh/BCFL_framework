@@ -11,7 +11,7 @@ import numpy as np
 
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 torch.multiprocessing.set_start_method('spawn')
-save_root_path = "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"
+save_root_path = "crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"
 
 model_name = "mnist-client-"
 option="data"
@@ -55,13 +55,13 @@ class MyMnist(Dataset):
 trainers = ["trainer1","trainer2","trainer3","trainer4"]
 evaluator = "evaluator"
 
-train_data_path = "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_femnist/data/all_data_0_niid_05_keep_0_train_9.json"
-test_data_path = "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_femnist/data/all_data_0_niid_05_keep_0_test_9.json"
+train_data_path = "crowdsource_back/back/src/utils/pytorch_femnist/data/all_data_0_niid_05_keep_0_train_9.json"
+test_data_path = "crowdsource_back/back/src/utils/pytorch_femnist/data/all_data_0_niid_05_keep_0_test_9.json"
 
 
 
 """ 데이터 생성이 필요할 시 주석 해제하고 사용 """
-# with open("/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"+str(evaluator)+"_data.json","w") as f:
+# with open("crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"+str(evaluator)+"_data.json","w") as f:
 #     json_format = {
 #       "name": evaluator,
 #       "x":[],
@@ -69,7 +69,7 @@ test_data_path = "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_femni
 #     }
 #     json.dump(json_format,f)
 # for trainer in trainers:
-#   with open("/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"+str(trainer)+"_data.json","w") as f:
+#   with open("crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"+str(trainer)+"_data.json","w") as f:
 #     json_format = {
 #       "name": trainer,
 #       "x":[],
@@ -85,7 +85,7 @@ test_data_path = "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_femni
 #   user_data = data_json['user_data']
 #   print("users length : ",len(users))
 #   print("sum of test datas : ",sum(data_json["num_samples"]))
-#   save_file_path = "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"
+#   save_file_path = "crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"
 #   for idx in range(len(users)):  
 #     client_data = user_data[users[idx]]
 #     client_data_x = client_data["x"]
@@ -106,7 +106,7 @@ test_data_path = "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_femni
 #   user_data = data_json['user_data']
 #   print("users length : ",len(users))
 #   print("sum of train datas : ",sum(data_json["num_samples"]))
-#   save_file_path = "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"
+#   save_file_path = "crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"
 #   for idx in range(len(users)):  
 #     client_data = user_data[users[idx]]
 #     client_data_x = client_data["x"]
@@ -171,7 +171,7 @@ test_data_path = "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_femni
 #     json.dump(json_object,f)
 
 # for user in users:
-#   with open("/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"+str(user)+"_data.json",'r') as f:
+#   with open("crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"+str(user)+"_data.json",'r') as f:
 #     user_json = json.load(f)
 #     print(len(user_json["x"]))
 #     print(user_json["y"])

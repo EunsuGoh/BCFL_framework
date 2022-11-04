@@ -6933,12 +6933,12 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0x192ee71Bb2D578d929ef1Df8C1029d7739d38E8a",
-      "transactionHash": "0x7e77c5845dd648d98005b0d5eb2bcd0c680fe77a54831d9f6449b33cf5cef03f"
+      "address": "0xBc3F8Dc396da1ea213a04E69df585C2a7951F25D",
+      "transactionHash": "0x6431d7f083a4a8ffaa926d55300f1510019d8088c3c6ae2a58e15788a0b2058d"
     }
   },
   "schemaVersion": "3.4.8",
-  "updatedAt": "2022-11-03T02:08:19.695Z",
+  "updatedAt": "2022-11-04T00:29:15.274Z",
   "networkType": "ethereum",
   "devdoc": {
     "author": "Harry Cai",

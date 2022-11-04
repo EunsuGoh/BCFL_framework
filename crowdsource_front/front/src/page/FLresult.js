@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 import axios from 'axios';
 import serverEndpoint from '../server_setting.json';
-import loading from '/home/dy/2cp_new/crowdsource_front/front/src/kOnzy.gif';
+import loading from '../kOnzy.gif';
 import ResultComponent from '../components/ResultComponent';
 
 function FLresult() {

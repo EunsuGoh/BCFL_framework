@@ -463,7 +463,7 @@ class FeMnistNet(nn.Module):
         return F.log_softmax(x) # fully-connected layer에 넣고 logsoftmax 적용
 
 def custom_cifar_crowdsource():
-    trainset_path = '/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/'+'trainer'+sys.argv[1]+'_data.json'
+    trainset_path = 'crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/'+'trainer'+sys.argv[1]+'_data.json'
     tf = open("eval_contract.json","r")
     new_dict = json.load(tf)
     eval_contract_addr = new_dict["eval_cont_addr"]

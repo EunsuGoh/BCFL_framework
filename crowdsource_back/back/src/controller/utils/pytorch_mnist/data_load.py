@@ -10,7 +10,7 @@ import numpy as np
 
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 torch.multiprocessing.set_start_method('spawn')
-save_root_path = "/home/dy/2cp_new/crowdsource_back/back/src/utils/pytorch_mnist/data/MNIST/MNIST"
+save_root_path = "crowdsource_back/back/src/utils/pytorch_mnist/data/MNIST/MNIST"
 model_name = "mnist-client-"
 option="data"
 
