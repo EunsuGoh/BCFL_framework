@@ -77,7 +77,7 @@
 5. npm run start-eval
 6. cd crowdsource_back/back (new terminal open)
 
-## run test crowdsource code (단일 스크립트 실행)
+## run test crowdsource code (run single python script from backend side)
 1. ganache-cli --port=7545
 2. ipfs daemon
 3. truffle migrate --network development --reset
