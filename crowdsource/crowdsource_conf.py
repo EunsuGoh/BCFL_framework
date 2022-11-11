@@ -8,6 +8,6 @@ config=\
     'learning_rate': 0.001,
     },
     'NUMBER_OF_TRAINERS':3,
-    'EVAL_METHOD':'step',
+    'EVAL_METHOD':'loo',
     'ROUND_DURATION':30000
   }

@@ -14,7 +14,7 @@ import pyvacy.optim
 from pyvacy.analysis import moments_accountant as epsilon
 from ipfs_client import IPFSClient
 from contract_clients import CrowdsourceContractClient, ConsortiumContractClient
-import shapley
+import contribution
 import wandb
 import json
 from torchvision.transforms import ToTensor
@@ -24,7 +24,7 @@ import threading
 
 
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
-# wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
+wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
 
 class _BaseClient:
     """
@@ -370,8 +370,12 @@ class CrowdsourceClient(_GenesisClient):
         if method == 'shapley':
             def characteristic_function(*c):
                 return self._marginal_value(training_round, *c)
-            scores = shapley.values(
+            scores = contribution.shapley_values(
                 characteristic_function, cids)
+            for index, score in enumerate(scores) :
+                trainer_name = "SV_trainer"+str(index+1)
+                print(trainer_name,type(scores[score]))
+                wandb.log({trainer_name: scores[score]})
         if method == 'step':
             scores = {}
             idx = 0
@@ -379,7 +383,15 @@ class CrowdsourceClient(_GenesisClient):
                 scores[cid] = self._marginal_value(training_round, cid)
                 print(idx)
                 print(scores[cid])
-
+        if method == 'loo':
+            def characteristic_function(*c):
+                return self._marginal_value(training_round,*c)
+            scores = contribution.loo(
+                characteristic_function,cids)
+            for index, score in enumerate(scores) :
+                trainer_name = "LOO_trainer"+str(index+1)
+                print(trainer_name,type(scores[score]))
+                wandb.log({trainer_name: scores[score]})
 
         self._print(
             f"Scores in round :{training_round} are :{list(scores.values())}: and cids :{cids}")

@@ -14,7 +14,7 @@ import pyvacy.optim
 from pyvacy.analysis import moments_accountant as epsilon
 from ipfs_client import IPFSClient
 from contract_clients import CrowdsourceContractClient
-import shapley
+import contribution
 import wandb
 import json
 from torchvision.transforms import ToTensor
@@ -367,7 +367,7 @@ class CrowdsourceClient(_GenesisClient):
         if method == 'shapley':
             def characteristic_function(*c):
                 return self._marginal_value(training_round, *c)
-            scores = shapley.values(
+            scores = contribution.values(
                 characteristic_function, cids)
         if method == 'step':
             scores = {}

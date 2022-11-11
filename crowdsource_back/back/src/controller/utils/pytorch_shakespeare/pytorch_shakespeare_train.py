@@ -13,7 +13,7 @@ import methodtools
 import pyvacy.optim
 from ipfs_client import IPFSClient
 from contract_clients import CrowdsourceContractClient, ConsortiumContractClient
-import shapley
+import contribution
 import wandb
 import json
 from torch.utils.data.dataset import random_split
@@ -371,7 +371,7 @@ class CrowdsourceClient(_GenesisClient):
         if method == 'shapley':
             def characteristic_function(*c):
                 return self._marginal_value(training_round, *c)
-            scores = shapley.values(
+            scores = contribution.values(
                 characteristic_function, cids)
         if method == 'step':
             scores = {}
