@@ -167,11 +167,11 @@ class CrowdsourceClient(_GenesisClient):
             self._gas_history[r] = self.get_gas_used()
         self._print(f"Done training. Gas used: {self.get_gas_used()}")
 
-    def evaluate_until(self, final_round_num, method):
+    def evaluate_until(self, final_round_num, method, scenario):
         self._gas_history[1] = self.get_gas_used()
         for r in range(1, final_round_num+1):
             self.wait_for_round(r + 1)
-            scores = self._evaluate_single_round(r, method)
+            scores = self._evaluate_single_round(r, method ,scenario)
             txs = self._set_tokens(scores)
             self.wait_for_txs(txs)
             self._gas_history[r+1] = self.get_gas_used()
@@ -358,9 +358,10 @@ class CrowdsourceClient(_GenesisClient):
                     avg_param += client_param / len(models)
         return avg_model
 
-    def _evaluate_single_round(self, training_round, method):
+    def _evaluate_single_round(self, training_round, method, scenario):
         """
         Provide Shapley Value score for each update in the given training round.
+        scenario = "crowdsource" || "consortium"
         """
         self._print(f"Evaluating updates in round {training_round}...")
 
@@ -371,26 +372,40 @@ class CrowdsourceClient(_GenesisClient):
                 return self._marginal_value(training_round, *c)
             scores = contribution.shapley_values(
                 characteristic_function, cids)
-            for index, score in enumerate(scores) :
-                trainer_name = "SV_trainer"+str(index+1)
-                print(trainer_name,type(scores[score]))
-                wandb.log({trainer_name: scores[score]})
-        if method == 'step':
-            scores = {}
-            idx = 0
-            for cid in cids:
-                scores[cid] = self._marginal_value(training_round, cid)
-                print(idx)
-                print(scores[cid])
+            if scenario == 'crowdsource':
+                # Connect to wandb
+                for index, score in enumerate(scores) :
+                    trainer_name = "SV_trainer"+str(index+1)
+                    print(trainer_name,type(scores[score]))
+                    wandb.log({trainer_name: scores[score]})
+            elif scenario == 'consortium':
+                # Connect to wandb
+                print("test")
+            else : 
+                print("Error - Input scenario first")
+        # if method == 'step':
+        #     scores = {}
+        #     idx = 0
+        #     for cid in cids:
+        #         scores[cid] = self._marginal_value(training_round, cid)
+        #         print(idx)
+        #         print(scores[cid])
         if method == 'loo':
             def characteristic_function(*c):
                 return self._marginal_value(training_round,*c)
             scores = contribution.loo(
                 characteristic_function,cids)
-            for index, score in enumerate(scores) :
-                trainer_name = "LOO_trainer"+str(index+1)
-                print(trainer_name,type(scores[score]))
-                wandb.log({trainer_name: scores[score]})
+            if scenario == 'crowdsource':
+                # Connect to wandb
+                for index, score in enumerate(scores) :
+                    trainer_name = "SV_trainer"+str(index+1)
+                    print(trainer_name,type(scores[score]))
+                    wandb.log({trainer_name: scores[score]})
+            elif scenario == 'consortium':
+                # Connect to wandb
+                print("test")
+            else : 
+                print("Error - Input scenario first")
 
         self._print(
             f"Scores in round :{training_round} are :{list(scores.values())}: and cids :{cids}")
@@ -489,12 +504,12 @@ class ConsortiumClient(_BaseClient):
         for t in threads:
             t.join()
 
-    def evaluate_until(self, final_training_round, method):
+    def evaluate_until(self, final_training_round, method, scenario):
         eval_clients = self._get_eval_clients()
         threads = [
             threading.Thread(
                 target=eval_client.evaluate_until,
-                args=(final_training_round, method),
+                args=(final_training_round, method,scenario),
                 daemon=True
             ) for eval_client in eval_clients
         ]

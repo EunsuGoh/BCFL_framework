@@ -65,7 +65,7 @@ def test_consortium():
     threads.extend([
         threading.Thread(
             target=trainer.evaluate_until,
-            args=(TRAINING_ITERATIONS, EVAL_METHOD),
+            args=(TRAINING_ITERATIONS, EVAL_METHOD,"consortium"),
             daemon=True
         ) for trainer in train_clients
     ])
