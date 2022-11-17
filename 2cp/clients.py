@@ -6,7 +6,6 @@ import torch.nn.functional as F
 import numpy as np
 from torch.nn.functional import normalize
 import torch.optim as optim
-# from data_load import MyShakespeare
 import time
 import methodtools
 import torch
