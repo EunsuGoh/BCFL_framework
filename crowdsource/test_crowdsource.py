@@ -16,6 +16,7 @@ TRAINING_HYPERPARAMS = config['TRAINING_HYPERPARAMS']
 EVAL_METHOD = config['EVAL_METHOD']
 TORCH_SEED = 8888
 ROUND_DURATION = config['ROUND_DURATION'] 
+SELECTION_METHOD = config['SELECTION_METHOD']
 
 torch.manual_seed(TORCH_SEED)
 
@@ -52,13 +53,14 @@ def test_crowdsource():
             train_dataset = json.load(f)
             train_data = train_dataset['x']
             train_targets = train_dataset['y']
-        my_train_data = MyData(train_data, train_targets, True)
-        train_client = CrowdsourceClient(trainer,my_train_data,train_targets,Mymodel, F.cross_entropy,int(trainer_index),contract_address=evaluator.contract_address)
+        my_train_data = MyData(train_data, train_targets, True,device_num=str(trainer_index))
+        train_client = CrowdsourceClient(trainer,my_train_data,train_targets,Mymodel, F.cross_entropy,int(trainer_index),contract_address=evaluator.contract_address, device_num= str(trainer_index))
         train_clients.append(train_client)
 
     evaluator.set_genesis_model(
         round_duration=ROUND_DURATION,
-        max_num_updates=config['NUMBER_OF_TRAINERS']
+        max_num_updates=config['NUMBER_OF_TRAINERS'],
+        scenario = "crowdsource"
     )
 
     # Training
@@ -74,7 +76,10 @@ def test_crowdsource():
     threads.append(
         threading.Thread(
             target=evaluator.evaluate_until,
-            args=(TRAINING_ITERATIONS, EVAL_METHOD),
+            args=(TRAINING_ITERATIONS, EVAL_METHOD,"crowdsource"),
+            kwargs={
+                'selection_method':SELECTION_METHOD
+            },
             daemon=True
         )
     )
@@ -87,5 +92,8 @@ def test_crowdsource():
 
     for trainer in train_clients:
         print_token_count(trainer)
+    
+    final_global_model_cid = evaluator._get_global_model(TRAINING_ITERATIONS+1)
+    print(final_global_model_cid)
 
 test_crowdsource()

@@ -55,101 +55,103 @@ class MyMnist(Dataset):
 trainers = ["trainer1","trainer2","trainer3","trainer4"]
 evaluator = "evaluator"
 
-train_data_path = "crowdsource_back/back/src/utils/pytorch_femnist/data/all_data_0_niid_05_keep_0_train_9.json"
-test_data_path = "crowdsource_back/back/src/utils/pytorch_femnist/data/all_data_0_niid_05_keep_0_test_9.json"
+test_data_path = "/home/dy/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/all_data_0_niid_2_keep_0_test_9.json"
+train_data_path = "/home/dy/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/all_data_0_niid_2_keep_0_train_9.json"
 
 
 
 """ 데이터 생성이 필요할 시 주석 해제하고 사용 """
-# with open("crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"+str(evaluator)+"_data.json","w") as f:
-#     json_format = {
-#       "name": evaluator,
-#       "x":[],
-#       "y":[]
-#     }
-#     json.dump(json_format,f)
-# for trainer in trainers:
-#   with open("crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"+str(trainer)+"_data.json","w") as f:
-#     json_format = {
-#       "name": trainer,
-#       "x":[],
-#       "y":[]
-#     }
-#     json.dump(json_format,f)
+# /home/dy/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/user_data/evaluator_data.json
+with open("/home/dy/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/user_data/"+str(evaluator)+"_data.json","w") as f:
+    json_format = {
+      "name": evaluator,
+      "x":[],
+      "y":[]
+    }
+    json.dump(json_format,f)
+for trainer in trainers:
+  with open("/home/dy/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/user_data/"+str(trainer)+"_data.json","w") as f:
+    json_format = {
+      "name": trainer,
+      "x":[],
+      "y":[]
+    }
+    json.dump(json_format,f)
 
-# # test data preprocessing
-# with open(test_data_path,'r') as f:
-#   data_json = json.load(f)
-#   # print("train num of samples",sum(data_json["num_samples"]))
-#   users = data_json['users']
-#   user_data = data_json['user_data']
-#   print("users length : ",len(users))
-#   print("sum of test datas : ",sum(data_json["num_samples"]))
-#   save_file_path = "crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"
-#   for idx in range(len(users)):  
-#     client_data = user_data[users[idx]]
-#     client_data_x = client_data["x"]
-#     client_data_y = client_data["y"]
-#     with open(save_file_path+"evaluator"+"_data.json",'r') as f:
-#       json_object = json.load(f)
-#     json_object["x"] = json_object["x"] + client_data_x
-#     json_object["y"] = json_object["y"] + client_data_y
-#     with open(save_file_path+"evaluator"+"_data.json",'w') as f:
-#       json.dump(json_object,f)
+# test data preprocessing
+with open(test_data_path,'r') as f:
+  data_json = json.load(f)
+  # print("train num of samples",sum(data_json["num_samples"]))
+  users = data_json['users']
+  user_data = data_json['user_data']
+  print("users length : ",len(users))
+  print("sum of test datas : ",sum(data_json["num_samples"]))
+  save_file_path = "/home/dy/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/user_data/"
+  for idx in range(len(users)):  
+    client_data = user_data[users[idx]]
+    client_data_x = client_data["x"]
+    client_data_y = client_data["y"]
+    with open(save_file_path+"evaluator"+"_data.json",'r') as f:
+      json_object = json.load(f)
+    json_object["x"] = json_object["x"] + client_data_x
+    json_object["y"] = json_object["y"] + client_data_y
+    with open(save_file_path+"evaluator"+"_data.json",'w') as f:
+      json.dump(json_object,f)
   
 
-# # train data preprocessing
-# with open(train_data_path,'r') as f:
-#   data_json = json.load(f)
-#   # print("train num of samples",sum(data_json["num_samples"]))
-#   users = data_json['users']
-#   user_data = data_json['user_data']
-#   print("users length : ",len(users))
-#   print("sum of train datas : ",sum(data_json["num_samples"]))
-#   save_file_path = "crowdsource_back/back/src/utils/pytorch_femnist/data/user_data/"
-#   for idx in range(len(users)):  
-#     client_data = user_data[users[idx]]
-#     client_data_x = client_data["x"]
-#     client_data_y = client_data["y"]
-#     if idx%4 ==0:
-#       ## trainer1's data
-#       with open(save_file_path+trainers[0]+"_data.json",'r') as f:
-#         json_object = json.load(f)
-#       json_object["x"] = json_object["x"] + client_data_x
-#       json_object["y"] = json_object["y"] + client_data_y
-#       with open(save_file_path+trainers[0]+"_data.json",'w') as f:
-#         json.dump(json_object,f)
+# train data preprocessing
+with open(train_data_path,'r') as f:
+  data_json = json.load(f)
+  # print("train num of samples",sum(data_json["num_samples"]))
+  users = data_json['users']
+  user_data = data_json['user_data']
+  print("users length : ",len(users))
+  print("sum of train datas : ",sum(data_json["num_samples"]))
+  save_file_path = "/home/dy/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/user_data/"
+  for idx in range(len(users)): 
+    print(idx) 
+    client_data = user_data[users[idx]]
+    client_data_x = client_data["x"]
+    client_data_y = client_data["y"]
+    if idx%4 ==0:
+      ## trainer1's data
+      with open(save_file_path+trainers[0]+"_data.json",'r') as f:
+        json_object = json.load(f)
+      json_object["x"] = json_object["x"] + client_data_x
+      json_object["y"] = json_object["y"] + client_data_y
+      with open(save_file_path+trainers[0]+"_data.json",'w') as f:
+        json.dump(json_object,f)
   
-#     elif idx%4 == 1:
-#       ## trainer2's data
-#       with open(save_file_path+trainers[1]+"_data.json",'r') as f:
-#         json_object = json.load(f)
-#       json_object["x"] = json_object["x"] + client_data_x
-#       json_object["y"] = json_object["y"] + client_data_y
-#       with open(save_file_path+trainers[1]+"_data.json",'w') as f:
-#         json.dump(json_object,f)
+    elif idx%4 == 1:
+      ## trainer2's data
+      with open(save_file_path+trainers[1]+"_data.json",'r') as f:
+        json_object = json.load(f)
+      json_object["x"] = json_object["x"] + client_data_x
+      json_object["y"] = json_object["y"] + client_data_y
+      with open(save_file_path+trainers[1]+"_data.json",'w') as f:
+        json.dump(json_object,f)
         
-#     elif idx%4 ==2 :
-#       ##trainer3's data
-#       with open(save_file_path+trainers[2]+"_data.json",'r') as f:
-#         json_object = json.load(f)
-#       json_object["x"] = json_object["x"] + client_data_x
-#       json_object["y"] = json_object["y"] + client_data_y
-#       with open(save_file_path+trainers[2]+"_data.json",'w') as f:
-#         json.dump(json_object,f)
+    elif idx%4 ==2 :
+      ##trainer3's data
+      with open(save_file_path+trainers[2]+"_data.json",'r') as f:
+        json_object = json.load(f)
+      json_object["x"] = json_object["x"] + client_data_x
+      json_object["y"] = json_object["y"] + client_data_y
+      with open(save_file_path+trainers[2]+"_data.json",'w') as f:
+        json.dump(json_object,f)
         
-#     else :
-#       ## trainer4's data
-#       with open(save_file_path+trainers[3]+"_data.json",'r') as f:
-#         json_object = json.load(f)
-#       json_object["x"] = json_object["x"] + client_data_x
-#       json_object["y"] = json_object["y"] + client_data_y
-#       with open(save_file_path+trainers[3]+"_data.json",'w') as f:
-#         json.dump(json_object,f)
+    else :
+      ## trainer4's data
+      with open(save_file_path+trainers[3]+"_data.json",'r') as f:
+        json_object = json.load(f)
+      json_object["x"] = json_object["x"] + client_data_x
+      json_object["y"] = json_object["y"] + client_data_y
+      with open(save_file_path+trainers[3]+"_data.json",'w') as f:
+        json.dump(json_object,f)
 """ 데이터 생성이 필요할 시 주석 해제하고 사용 """
 
-  # for user in users:
-  #   print(user,len(data_json["user_data"][str(user)]["y"]))
+#   for user in users:
+#     print(user,len(data_json["user_data"][str(user)]["y"]))
     
 
 # with open(test_data_path,'r') as f:

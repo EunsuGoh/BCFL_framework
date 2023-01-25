@@ -69,93 +69,94 @@ test_data_path = os.environ.get("SHAKESPEARE_TEST_DATA_PATH")
 #   print("sum of datas : ",sum(jsonfile["num_samples"]))
 
 """ 데이터 생성이 필요할 시 주석 해제하고 사용 """
-# with open("crowdsource_back/back/src/utils/pytorch_shakespeare/data/user_data/"+str(evaluator)+"_data.json","w") as f:
-#     json_format = {
-#       "name": evaluator,
-#       "x":[],
-#       "y":[]
-#     }
-#     json.dump(json_format,f)
-# for trainer in trainers:
-#   with open("crowdsource_back/back/src/utils/pytorch_shakespeare/data/user_data/"+str(trainer)+"_data.json","w") as f:
-#     json_format = {
-#       "name": trainer,
-#       "x":[],
-#       "y":[]
-#     }
-#     json.dump(json_format,f)
+with open(save_root_path+str(evaluator)+"_data.json","w") as f:
+    json_format = {
+      "name": evaluator,
+      "x":[],
+      "y":[]
+    }
+    json.dump(json_format,f)
+for trainer in trainers:
+  with open(save_root_path+str(trainer)+"_data.json","w") as f:
+    json_format = {
+      "name": trainer,
+      "x":[],
+      "y":[]
+    }
+    json.dump(json_format,f)
 
-# # test data preprocessing
-# with open(test_data_path,'r') as f:
-#   data_json = json.load(f)
-#   # print("train num of samples",sum(data_json["num_samples"]))
-#   users = data_json['users']
-#   user_data = data_json['user_data']
-#   print("users length : ",len(users))
-#   print("sum of test datas : ",sum(data_json["num_samples"]))
-#   save_file_path = "crowdsource_back/back/src/utils/pytorch_shakespeare/data/user_data/"
-#   for idx in range(len(users)):  
-#     client_data = user_data[users[idx]]
-#     client_data_x = client_data["x"]
-#     client_data_y = client_data["y"]
-#     with open(save_file_path+"evaluator"+"_data.json",'r') as f:
-#       json_object = json.load(f)
-#     json_object["x"] = json_object["x"] + client_data_x
-#     json_object["y"] = json_object["y"] + client_data_y
-#     with open(save_file_path+"evaluator"+"_data.json",'w') as f:
-#       json.dump(json_object,f)
+# test data preprocessing
+with open(test_data_path,'r') as f:
+  data_json = json.load(f)
+  # print("train num of samples",sum(data_json["num_samples"]))
+  users = data_json['users']
+  user_data = data_json['user_data']
+  print("users length : ",len(users))
+  print("sum of test datas : ",sum(data_json["num_samples"]))
+
+  for idx in range(len(users)):  
+    client_data = user_data[users[idx]]
+    client_data_x = client_data["x"]
+    client_data_y = client_data["y"]
+    with open(save_root_path+"evaluator"+"_data.json",'r') as f:
+      json_object = json.load(f)
+    json_object["x"] = json_object["x"] + client_data_x
+    json_object["y"] = json_object["y"] + client_data_y
+    with open(save_root_path+"evaluator"+"_data.json",'w') as f:
+      json.dump(json_object,f)
   
 
-# # train data preprocessing
-# with open(train_data_path,'r') as f:
-#   data_json = json.load(f)
-#   # checklist = json.dumps(data_json)
-#   # print(checklist[51300813:51300836])
-#   # print("train num of samples",sum(data_json["num_samples"]))
-#   users = data_json['users']
-#   user_data = data_json['user_data']
-#   print("users length : ",len(users))
-#   print("sum of train datas : ",sum(data_json["num_samples"]))
-#   save_file_path = "crowdsource_back/back/src/utils/pytorch_shakespeare/data/user_data/"
-#   for idx in range(len(users)):  
-#     client_data = user_data[users[idx]]
-#     client_data_x = client_data["x"]
-#     client_data_y = client_data["y"]
-#     if idx%4 ==0:
-#       ## trainer1's data
-#       with open(save_file_path+trainers[0]+"_data.json",'r') as f:
-#         json_object = json.load(f)
-#       json_object["x"] = json_object["x"] + client_data_x
-#       json_object["y"] = json_object["y"] + client_data_y
-#       with open(save_file_path+trainers[0]+"_data.json",'w') as f:
-#         json.dump(json_object,f)
+# train data preprocessing
+with open(train_data_path,'r') as f:
+  data_json = json.load(f)
+  # checklist = json.dumps(data_json)
+  # print(checklist[51300813:51300836])
+  # print("train num of samples",sum(data_json["num_samples"]))
+  users = data_json['users']
+  user_data = data_json['user_data']
+  print("users length : ",len(users))
+  print("sum of train datas : ",sum(data_json["num_samples"]))
+
+  for idx in range(len(users)):  
+    print(idx)
+    client_data = user_data[users[idx]]
+    client_data_x = client_data["x"]
+    client_data_y = client_data["y"]
+    if idx%4 ==0:
+      ## trainer1's data
+      with open(save_root_path+trainers[0]+"_data.json",'r') as f:
+        json_object = json.load(f)
+      json_object["x"] = json_object["x"] + client_data_x
+      json_object["y"] = json_object["y"] + client_data_y
+      with open(save_root_path+trainers[0]+"_data.json",'w') as f:
+        json.dump(json_object,f)
   
-#     elif idx%4 == 1:
-#       ## trainer2's data
-#       with open(save_file_path+trainers[1]+"_data.json",'r') as f:
-#         json_object = json.load(f)
-#       json_object["x"] = json_object["x"] + client_data_x
-#       json_object["y"] = json_object["y"] + client_data_y
-#       with open(save_file_path+trainers[1]+"_data.json",'w') as f:
-#         json.dump(json_object,f)
+    elif idx%4 == 1:
+      ## trainer2's data
+      with open(save_root_path+trainers[1]+"_data.json",'r') as f:
+        json_object = json.load(f)
+      json_object["x"] = json_object["x"] + client_data_x
+      json_object["y"] = json_object["y"] + client_data_y
+      with open(save_root_path+trainers[1]+"_data.json",'w') as f:
+        json.dump(json_object,f)
         
-#     elif idx%4 ==2 :
-#       ##trainer3's data
-#       with open(save_file_path+trainers[2]+"_data.json",'r') as f:
-#         json_object = json.load(f)
-#       json_object["x"] = json_object["x"] + client_data_x
-#       json_object["y"] = json_object["y"] + client_data_y
-#       with open(save_file_path+trainers[2]+"_data.json",'w') as f:
-#         json.dump(json_object,f)
+    elif idx%4 ==2 :
+      ##trainer3's data
+      with open(save_root_path+trainers[2]+"_data.json",'r') as f:
+        json_object = json.load(f)
+      json_object["x"] = json_object["x"] + client_data_x
+      json_object["y"] = json_object["y"] + client_data_y
+      with open(save_root_path+trainers[2]+"_data.json",'w') as f:
+        json.dump(json_object,f)
         
-#     else :
-#       ## trainer4's data
-#       with open(save_file_path+trainers[3]+"_data.json",'r') as f:
-#         json_object = json.load(f)
-#       json_object["x"] = json_object["x"] + client_data_x
-#       json_object["y"] = json_object["y"] + client_data_y
-#       with open(save_file_path+trainers[3]+"_data.json",'w') as f:
-#         json.dump(json_object,f)
+    else :
+      ## trainer4's data
+      with open(save_root_path+trainers[3]+"_data.json",'r') as f:
+        json_object = json.load(f)
+      json_object["x"] = json_object["x"] + client_data_x
+      json_object["y"] = json_object["y"] + client_data_y
+      with open(save_root_path+trainers[3]+"_data.json",'w') as f:
+        json.dump(json_object,f)
 """ 데이터 생성이 필요할 시 주석 해제하고 사용 """
 
   # for user in users:

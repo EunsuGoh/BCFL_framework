@@ -1,0 +1,22 @@
+version: '3.7'
+
+services:
+  ipfs: 
+    hostname: ipfs-node
+    image: ipfs/kubo
+    ports:
+        - "5001:5001"
+
+  ganache:
+    hostname: ganache-node
+    image: trufflesuite/ganache-cli
+    ports:
+        - "7545:7545"
+    command:
+        --port=7545
+        --networkId=5777
+
+networks: 
+  default: 
+    external: 
+      name: bcflnet

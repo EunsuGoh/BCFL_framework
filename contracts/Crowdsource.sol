@@ -1,4 +1,6 @@
-pragma solidity >=0.4.21 <0.7.0;
+// pragma solidity >=0.4.21 <0.7.0;
+pragma solidity ^0.8.6;
+pragma experimental ABIEncoderV2;
 
 /// @title Records contributions made to a Crowdsourcing Federated Learning process
 /// @author Harry Cai
@@ -30,33 +32,104 @@ contract Crowdsource {
     /// @dev The IPFS CIDs of model updates made by each address
     mapping(address => bytes32[]) internal updatesFromAddress;
 
+    /// @dev The Account of model updates 
+    mapping( bytes32 => address) internal accountsFromUpdate;
+
     /// @dev Whether or not each model update has been evaluated
     mapping(bytes32 => bool) internal tokensAssigned;
 
     /// @dev The contributivity score for each model update, if evaluated
     mapping(bytes32 => uint256) internal tokens;
 
+    /// @dev Current Round's Trainer list
+    mapping(uint256 => address[]) internal curTrainers;
+
+    /// @dev Current Round's Evaluation complete flag
+    mapping(uint256 => bool) internal evalflag;
+
+    /// @dev Global model for each rounds
+    mapping(uint256 => bytes32) internal globalmodel;
+
+    struct ScoreandAccount {
+        address account;
+        uint256 score;
+    }
+
+    /// @dev Account, Scores by cids 
+    mapping(bytes32 => ScoreandAccount) internal score;
+
     event Log(string _myString , uint256 round);
 
     /// @notice Constructor. The address that deploys the contract is set as the evaluator.
     constructor() public {
-        evaluator = msg.sender;
+        // evaluator = msg.sender;
+        evaluator = tx.origin;
     }
 
     modifier evaluatorOnly() {
-        require(msg.sender == evaluator, "Not the registered evaluator");
+        // require(msg.sender == evaluator, "Not the registered evaluator");
+        require(tx.origin == evaluator, "Not the registered evaluator");
         _;
+    }
+
+    function saveGlobalmodel(bytes32 _cid, uint256 _round) external evaluatorOnly(){
+        globalmodel[_round] = _cid;
+    }
+
+    function getGlobalmodel (uint256 _round) external view returns (bytes32){
+        return globalmodel[_round];
+    }
+
+    function saveScores(bytes32 _cid, address _address, uint256 _score) external evaluatorOnly(){
+        score[_cid] = ScoreandAccount(_address,_score);
+    }
+
+    function getScores(bytes32 _cid) external view evaluatorOnly returns(ScoreandAccount memory){
+        return score[_cid];
+    }
+
+    function completeEval(uint256 _round) external evaluatorOnly() {
+        require(evalflag[_round] == false,"evaluation completed already.");
+        evalflag[_round] = true;
+    }
+
+    function getCurTrainers (uint256 _round) external view returns (address[] memory  trainers){
+        trainers = curTrainers[_round];
+    }
+
+    function isTrainer(address _address, uint256 _round) external view returns (bool trainCheckFlag){
+        trainCheckFlag=false;
+        
+        for(uint i = 0; i < curTrainers[_round].length ; i++){
+            if(curTrainers[_round][i] == _address){
+                trainCheckFlag= true;
+            }else{
+                continue;
+            }
+        } 
+        return trainCheckFlag;
+    }
+
+    function setCurTrainer(address[] memory _address, uint256 _round) public evaluatorOnly() {
+        for (uint i = 0; i<_address.length; i++){
+             curTrainers[_round].push(_address[i]);
+        }
+    }
+
+    function changeMaxNumUpdates(uint256 _maxNum) external evaluatorOnly(){
+        maxNumUpdates = _maxNum;
     }
 
     /// @return round The index of the current training round.
     function currentRound() public view returns (uint256 round) {
-        uint256 timeElapsed = timeSkipped + now - genesisTimestamp;
+        uint256 timeElapsed = timeSkipped + block.timestamp - genesisTimestamp;
         round = 1 + (timeElapsed / roundDuration);
     }
 
+
     /// @return remaining The number of seconds remaining in the current training round.
     function secondsRemaining() public view returns (uint256 remaining) {
-        uint256 timeElapsed = timeSkipped + now - genesisTimestamp;
+        uint256 timeElapsed = timeSkipped + block.timestamp - genesisTimestamp;
         remaining = roundDuration - (timeElapsed % roundDuration);
     }
 
@@ -121,13 +194,15 @@ contract Crowdsource {
     function setGenesis(
         bytes32 _cid,
         uint256 _roundDuration,
-        uint256 _maxNumUpdates
+        uint256 _maxNumUpdates,
+        address[] calldata accounts
     ) external evaluatorOnly() {
         require(genesis == 0, "Genesis has already been set");
         genesis = _cid;
-        genesisTimestamp = now;
+        genesisTimestamp = block.timestamp;
         roundDuration = _roundDuration;
         maxNumUpdates = _maxNumUpdates;
+        setCurTrainer(accounts, 1);
     }
 
     /// @notice Records a training contribution in the current round.
@@ -144,20 +219,54 @@ contract Crowdsource {
             "Cannot add an update for a future round"
         );
         require(
-            !madeContribution(msg.sender, _round),
+            // !madeContribution(msg.sender, _round),
+            !madeContribution(tx.origin, _round),
             "Already added an update for this round"
         );
 
         updatesInRound[_round].push(_cid);
-        updatesFromAddress[msg.sender].push(_cid);
+        // updatesFromAddress[msg.sender].push(_cid);
+        // accountsFromUpdate[_cid] = msg.sender;
+        updatesFromAddress[tx.origin].push(_cid);
+        accountsFromUpdate[_cid] = tx.origin;
         updateRound[_cid] = _round;
 
+        // if (
+        //     maxNumUpdates > 0 && updatesInRound[_round].length >= maxNumUpdates && _round == 1
+        // ) {
+        //     // Skip to the end of training round
+        //     timeSkipped += secondsRemaining();
+        // }
+    }
+
+     function skipRound(uint256 _round) 
+        external
+    {
+        // require( maxNumUpdates > 0 && updatesInRound[_round].length >= maxNumUpdates, "trainers did not finish their training process");
+        // require( evalflag[_round] == true, "evaluation is not completed");
+        // timeSkipped += secondsRemaining();
         if (
-            maxNumUpdates > 0 && updatesInRound[_round].length >= maxNumUpdates
+            maxNumUpdates > 0 && updatesInRound[_round].length >= maxNumUpdates && (evalflag[_round] == true || _round ==1)
         ) {
             // Skip to the end of training round
             timeSkipped += secondsRemaining();
         }
+    }
+
+    function waitTrainers (uint256 _round) external view returns (bool) {
+        if(updatesInRound[_round].length >= maxNumUpdates){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    function getmaxNum () public view returns (uint256) {
+        return maxNumUpdates;
+    }
+
+    function getAccountfromUpdate (bytes32 _cid) external view returns(address ){
+        return accountsFromUpdate[_cid];
     }
 
     /// @notice Assigns a token count to an update.

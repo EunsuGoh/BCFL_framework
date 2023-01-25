@@ -1,0 +1,27 @@
+
+FROM continuumio/miniconda3
+
+RUN apt-get update && apt-get install -y wget
+
+RUN python -m pip install --upgrade pip && \ 
+    pip install torch==1.11.0+cu113 torchvision==0.12.0+cu113 torchaudio==0.11.0 --extra-index-url https://download.pytorch.org/whl/cu113
+
+RUN pip install methodtools pyvacy scipy ipfshttpclient web3 click more_itertools matplotlib
+RUN wget https://dist.ipfs.io/go-ipfs/v0.17.0/go-ipfs_v0.17.0_linux-amd64.tar.gz && \
+  tar -xvzf go-ipfs_v0.17.0_linux-amd64.tar.gz && \
+  cd go-ipfs && \
+  bash install.sh && \
+  ipfs --version
+
+COPY 2cp /root/2cp
+COPY crowdsource/ /root/crowdsource
+COPY build /root/build
+
+RUN ["chmod", "+x", "/root/crowdsource/run_evaluator.sh"]
+RUN conda install conda-build
+# RUN conda develop 2cp
+
+WORKDIR /root
+
+ENTRYPOINT ["/bin/bash"]
+

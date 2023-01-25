@@ -13,9 +13,11 @@ import json
 
 TRAINING_ITERATIONS = config['TRAINING_ITERATIONS']
 TRAINING_HYPERPARAMS = config['TRAINING_HYPERPARAMS']
+BATCH_SIZE = TRAINING_HYPERPARAMS['batch_size']
 EVAL_METHOD = config['EVAL_METHOD']
 TORCH_SEED = 8888
 ROUND_DURATION = config['ROUND_DURATION']  # expecting rounds to always end early
+SELECTION_METHOD = config['SELECTION_METHOD']
 
 torch.manual_seed(TORCH_SEED)
 
@@ -38,20 +40,22 @@ def test_consortium():
             train_dataset = json.load(f)
             train_data = train_dataset['x']
             train_targets = train_dataset['y']
-        my_train_data = MyData(train_data, train_targets, True)
-        train_client = ConsortiumClient(trainer,my_train_data,train_targets,Mymodel, F.cross_entropy,int(trainer_index),contract_address=genesis.contract_address)
+        my_train_data = MyData(train_data, train_targets, True, device_num=str(trainer_index))
+        train_client = ConsortiumClient(trainer,my_train_data,train_targets,Mymodel, F.cross_entropy,int(trainer_index),batch_size = BATCH_SIZE, contract_address=genesis.contract_address, device_num=str(trainer_index))
         train_clients.append(train_client)
     
 
     genesis.set_genesis_model(
         round_duration=ROUND_DURATION,
-        max_num_updates=config['NUMBER_OF_TRAINERS']
+        max_num_updates=config['NUMBER_OF_TRAINERS'],
+        scenario = "consortium"
     )
 
     genesis.add_auxiliaries([
         trainer.address for trainer in train_clients
     ])
 
+# Add Consortium scenario's set Current Trainer Here
     # Training
     threads = [
         threading.Thread(
@@ -66,6 +70,9 @@ def test_consortium():
         threading.Thread(
             target=trainer.evaluate_until,
             args=(TRAINING_ITERATIONS, EVAL_METHOD,"consortium"),
+             kwargs={
+                'selection_method':SELECTION_METHOD
+            },
             daemon=True
         ) for trainer in train_clients
     ])
@@ -75,6 +82,7 @@ def test_consortium():
         t.start()
     for t in threads:
         t.join()
+        
         
     for trainer in train_clients:
         print_token_count(trainer)

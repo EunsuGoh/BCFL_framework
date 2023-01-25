@@ -74,10 +74,10 @@ class _GenesisClient(_BaseClient):
     Extends upon base client with the ability to set the genesis model to start training.
     """
 
-    def __init__(self, name, model_constructor, contract_constructor, account_idx, contract_address=None, deploy=False):
+    def __init__(self, name, model_constructor, contract_constructor, account_idx, ipfs_api ,contract_address=None, deploy=False):
         super().__init__(name, model_constructor,
                          contract_constructor, account_idx, contract_address, deploy)
-        self._ipfs_client = IPFSClient(model_constructor)
+        self._ipfs_client = IPFSClient(model_constructor, ipfs_api)
 
     def set_genesis_model(self, round_duration, max_num_updates=0):
         """

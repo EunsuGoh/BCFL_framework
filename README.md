@@ -36,7 +36,7 @@
 - mnist : torchvision dataset (preprocess + data_load)
 - femnist, shakespeare : leaf dataset (data_load)
     femnist : ./preprocess.sh -s niid --iu 4 --sf 0.2  -k 0 -t user -tf 0.8
-    shakespeare : ./preprocess.sh -s niid --iu 4 --sf 0.4  -k 0 -t user -tf 0.8
+    shakespeare : ./preprocess.sh -s niid --iu 4 --sf 0.2 -k 0 -t user -tf 0.8
 
 ## DATA PREPROCESSING
 - mnist
@@ -89,3 +89,5 @@
 8. python pytorch_{DATASET}_train.py {TRAINER_INDEX}
     i.e.) python pytorch_femnist_train.py 1 
         (*Warning : TRAINER_INDEX shoul start from 1)
+
+

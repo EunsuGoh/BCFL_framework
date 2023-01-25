@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 class MyData(Dataset):
     ## Edit below here
-    def __init__(self,data,targets,*trainFlag):
+    def __init__(self,data,targets,*trainFlag,device_num="0"):
       if trainFlag:
         # _data = data.astype(np.float32) 
         _data = torch.tensor(data)
@@ -16,14 +16,15 @@ class MyData(Dataset):
         self.x_data=_data
         self.y_data=_targets
         self.len = len(self.x_data)
+        self.device = torch.device('cuda:'+ device_num) if torch.cuda.is_available() else torch.device('cpu')
         
     def __getitem__(self,index):
-        device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+        # device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
         if torch.cuda.is_available():
           x_data = self.x_data[index].reshape(28,28)
           x_data =  x_data.unsqueeze(0)
-          x_data = x_data.to(device)
-          y_data = self.y_data[index].to(device)
+          x_data = x_data.to(self.device)
+          y_data = self.y_data[index].to(self.device)
           return x_data, y_data
     
     def __len__(self):

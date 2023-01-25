@@ -30,6 +30,18 @@ class BaseEthClient:
         receipts = [self._w3.eth.getTransactionReceipt(tx) for tx in self.txs]
         gas_amounts = [receipt['gasUsed'] for receipt in receipts]
         return sum(gas_amounts)
+    
+    #temp : 프론트 붙기 전까지 사용
+    def get_accounts(self,max_num_updates):
+        account_list = []
+        for i in range(1,max_num_updates+1):
+            account_list.append(self._w3.eth.accounts[i])
+        return account_list
+    
+    def get_account(self):
+        # print(self.address)
+        return self.address
+
 
 # 2. 컨소시엄, 크라우드 컨트랙트의 공통기능 포함
 # 계약 설정, byte32 및 기타 유틸리티와의 변환 처리
@@ -42,7 +54,7 @@ class _BaseContractClient(BaseEthClient):
 
     IPFS_HASH_PREFIX = bytes.fromhex('1220') #IPFS 해쉬값 접두사
 
-    def __init__(self, contract_json_path, account_idx, contract_address, deploy):
+    def __init__(self, contract_json_path,account_idx, contract_address, deploy):
         super().__init__(account_idx)
 
         self._contract_json_path = contract_json_path
@@ -85,7 +97,6 @@ class _BaseContractClient(BaseEthClient):
         model_cid = base58.b58encode(bytes34).decode()
         return model_cid
 
-
 class CrowdsourceContractClient(_BaseContractClient):
     """
     Wrapper over the Crowdsource.sol ABI, to gracefully bridge Python data to Solidity.
@@ -93,16 +104,16 @@ class CrowdsourceContractClient(_BaseContractClient):
     The API of this class should match that of the smart contract.
     """
 
-    def __init__(self, account_idx, address, deploy):
+    def __init__(self,  account_idx, address, deploy):
         super().__init__(
-            # "build/contracts/Crowdsource.json",
+            # "../build/contracts/Crowdsource.json",
             os.path.realpath(os.path.dirname(__file__))[0:-3]+"build/contracts/Crowdsource.json",
             account_idx,
             address,
             deploy
         )
         
-
+    # os.system("pwd")
     def evaluator(self):
         return self._contract.functions.evaluator().call()
 
@@ -113,6 +124,56 @@ class CrowdsourceContractClient(_BaseContractClient):
     def updates(self, training_round):
         cid_bytes = self._contract.functions.updates(training_round).call()
         return [self._from_bytes32(b) for b in cid_bytes]
+    
+    def saveGlobalmodel(self, model_cid, training_round):
+        cid_bytes = self._to_bytes32(model_cid)
+        tx = self._contract.functions.saveGlobalmodel(cid_bytes,training_round).transact()
+        self.txs.append(tx)
+        return tx
+
+    def getGlobalmodel(self, training_round):
+        cid_bytes = self._contract.functions.getGlobalmodel(training_round).call()
+        model_cid = self._from_bytes32(cid_bytes)
+        return model_cid
+        
+    def saveScores(self, model_cid, account_address, score):
+        cid_bytes = self._to_bytes32(model_cid)
+        tx = self._contract.functions.saveScores(cid_bytes, account_address, score).transact()
+        self.txs.append(tx)
+        return tx
+
+    def getScores(self, model_cid):
+        cid_bytes = self._to_bytes32(model_cid)
+        account, score = self._contract.functions.getScores(cid_bytes).call()
+        return account,score
+
+    def completeEval(self, training_round):
+        tx =  self._contract.functions.completeEval(training_round).transact()
+        self.txs.append(tx)
+        return tx
+
+    def getCurTrainers(self, training_round):
+        current_trainers = self._contract.functions.getCurTrainers(training_round).call()
+        return current_trainers
+
+    def isTrainer(self,training_round,account_address=None):
+        if account_address is None:
+            account_address = self.address
+        trainCheckFlag = self._contract.functions.isTrainer(account_address,training_round).call()
+        return trainCheckFlag
+        
+
+    def setCurTrainer(self, training_round, account_address=None, contract_address = None):
+        if account_address is None:
+            account_address = self.address
+        tx =  self._contract.functions.setCurTrainer(account_address,training_round).transact()
+        self.txs.append(tx)
+        return tx
+
+    def changeMaxNumUpdates(self, max_num):
+        tx = self._contract.functions.changeMaxNumUpdates(max_num).transact()
+        self.txs.append(tx)
+        return tx
 
     def currentRound(self):
         return self._contract.functions.currentRound().call()
@@ -135,11 +196,11 @@ class CrowdsourceContractClient(_BaseContractClient):
     def madeContribution(self, address, training_round):
         return self._contract.functions.madecontribution(address, training_round).call()
 
-    def setGenesis(self, model_cid, round_duration, max_num_updates):
+    def setGenesis(self, model_cid, round_duration, max_num_updates,accounts):
         cid_bytes = self._to_bytes32(model_cid)
         self._contract.functions.setGenesis(
-            cid_bytes, round_duration, max_num_updates).call()
-        tx = self._contract.functions.setGenesis(cid_bytes, round_duration, max_num_updates).transact()
+            cid_bytes, round_duration, max_num_updates,accounts).call()
+        tx = self._contract.functions.setGenesis(cid_bytes, round_duration, max_num_updates, accounts).transact()
         self.txs.append(tx)
         return tx
 
@@ -152,6 +213,20 @@ class CrowdsourceContractClient(_BaseContractClient):
         self.txs.append(tx)
         return tx
 
+    def skipRound(self, training_round):
+        tx = self._contract.functions.skipRound(training_round).transact()
+        self.txs.append(tx)
+        return tx
+
+    def waitTrainers (self, training_round):
+        train_flag = self._contract.functions.waitTrainers(training_round).call()
+        return train_flag
+    
+    def getAccountfromUpdate(self, model_cid):
+        cid_bytes = self._to_bytes32(model_cid)
+        account = self._contract.functions.getAccountfromUpdate(cid_bytes).call()
+        return account 
+
     def setTokens(self, model_cid, num_tokens):
         cid_bytes = self._to_bytes32(model_cid)
         self._contract.functions.setTokens(cid_bytes, num_tokens).call()
@@ -159,6 +234,9 @@ class CrowdsourceContractClient(_BaseContractClient):
             cid_bytes, num_tokens).transact()
         self.txs.append(tx)
         return tx
+
+    def getmaxNum (self):
+        return self._contract.functions.getmaxNum().call()
 
 
 class ConsortiumContractClient(_BaseContractClient):
@@ -197,16 +275,28 @@ class ConsortiumContractClient(_BaseContractClient):
             training_round = self.latestRound()
         return self._contract.functions.countTotalTokens(training_round).call()
 
-    def setGenesis(self, model_cid, round_duration, num_trainers):
+    def setGenesis(self, model_cid, round_duration, num_trainers,accounts):
         cid_bytes = self._to_bytes32(model_cid)
         self._contract.functions.setGenesis(
-            cid_bytes, round_duration, num_trainers).call()
-        tx = self._contract.functions.setGenesis(cid_bytes, round_duration, num_trainers).transact()
+            cid_bytes, round_duration, num_trainers,accounts).call()
+        tx = self._contract.functions.setGenesis(cid_bytes, round_duration, num_trainers,accounts).transact()
+        self.txs.append(tx)
+        return tx
+    
+    def setConsCurTrainer(self, training_round, account_address, contract_address):
+        # print(type(account_address))
+        print(contract_address)
+        tx = self._contract.functions.setConsCurTrainer(account_address, training_round, contract_address).transact()
         self.txs.append(tx)
         return tx
 
-    def addAux(self, evaluator):
-        self._contract.functions.addAux(evaluator).call()
-        tx = self._contract.functions.addAux(evaluator).transact()
+    # def setConsEvaluator (self):
+    #     tx = self._contract.functions.setConsEvaluator(self.address,self.contract_address)
+    #     self.txs.append(tx)
+    #     return tx
+
+    def addAux(self, evaluator, accounts):
+        self._contract.functions.addAux(evaluator,accounts).call()
+        tx = self._contract.functions.addAux(evaluator,accounts).transact()
         self.txs.append(tx)
         return tx

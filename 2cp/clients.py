@@ -14,16 +14,17 @@ from pyvacy.analysis import moments_accountant as epsilon
 from ipfs_client import IPFSClient
 from contract_clients import CrowdsourceContractClient, ConsortiumContractClient
 import contribution
-import wandb
 import json
 from torchvision.transforms import ToTensor
 import sys
 import os
 import threading
+from client_selection import random_selection,fcfs_selection,all_selection,score_order
 
 
-device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
-wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
+# device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+# print(device)
+# wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
 
 class _BaseClient:
     """
@@ -31,16 +32,19 @@ class _BaseClient:
     Crowdsource Protocol and the Consortium Protocol.
     """
 
-    def __init__(self, name, model_constructor, contract_constructor, account_idx, contract_address=None, deploy=False):
+    def __init__(self, name, model_constructor, contract_constructor,account_idx, contract_address=None, deploy=False):
+        self.evt = threading.Event()
         self.name = name
         self._model_constructor = model_constructor
         if deploy:
             self._print("Deploying contract...")
+        # self._print(f'contract_constructor : {contract_constructor}')
         self._contract = contract_constructor(
             account_idx, contract_address, deploy)
         self._account_idx = account_idx
         self.address = self._contract.address
         self.contract_address = self._contract.contract_address
+        # self._print(f"name : {self.name}, model_constructor : {self._model_constructor},provider : {provider}, account_idx : {account_idx}, contract_address : {contract_address}, deploy : {deploy} ")
         self._print(
             f"Connected to contract at address {self.contract_address}")
 
@@ -52,6 +56,10 @@ class _BaseClient:
 
     def get_gas_used(self):
         return self._contract.get_gas_used()
+    
+    # temp
+    def get_accounts(self,max_num_updates):
+        return self._contract.get_accounts(max_num_updates)
 
     def wait_for_txs(self, txs):
         receipts = []
@@ -71,12 +79,12 @@ class _GenesisClient(_BaseClient):
     Extends upon base client with the ability to set the genesis model to start training.
     """
 
-    def __init__(self, name, model_constructor, contract_constructor, account_idx, contract_address=None, deploy=False):
+    def __init__(self, name, model_constructor,contract_constructor,account_idx,contract_address=None, deploy=False):
         super().__init__(name, model_constructor,
                          contract_constructor, account_idx, contract_address, deploy)
-        self._ipfs_client = IPFSClient(model_constructor)
+        self._ipfs_client = IPFSClient(model_constructor,"/ip4/127.0.0.1/tcp/5001")
 
-    def set_genesis_model(self, round_duration, max_num_updates=0):
+    def set_genesis_model(self, round_duration,scenario,max_num_updates=0):
         """
         Create, upload and record the genesis model.
         """
@@ -84,10 +92,29 @@ class _GenesisClient(_BaseClient):
         genesis_model = self._model_constructor()
         # genesis_model.to(device)
         genesis_cid = self._upload_model(genesis_model)
+        account_list = self.get_accounts(max_num_updates)
+        self._print(f"accounts setting ... : {account_list}")
         self._print(f"Genesis model cid : {genesis_cid}")
         tx = self._contract.setGenesis(
-            genesis_cid, round_duration, max_num_updates)
+            genesis_cid, round_duration, max_num_updates,account_list)
         self.wait_for_txs([tx])
+        # if scenario == "crowdsource":
+        #     # for i in range (max_num_updates):
+        #     #     self._print(f"init genesis round's trainers : {account_list[i]}")
+        #     #     # 첫 라운드는 모든 트레이너 등록
+        #     #     tx = self._contract.setCurTrainer(1,account_address=account_list[i])
+        #     #     self.wait_for_txs([tx])
+        #     self._print(f"init genesis round's trainers : {account_list}")
+        #     tx = self._contract.setCurTrainer(1,account_address=account_list)
+        #     self.wait_for_txs([tx])
+        # else:
+        #     for i in range (max_num_updates):
+        #         self._print(f"init genesis round's trainers : {account_list[i]}")
+        #         # tx = self._contract.setConsEvaluator()
+        #         # self.wait_for_txs([tx])
+        #         # 첫 라운드는 모든 트레이너 등록
+        #         # tx = self._contract.setConsCurTrainer(1,account_list[i], self.contract_address)
+        #         # self.wait_for_txs([tx])
 
     def _upload_model(self, model):
         """Uploads the given model to IPFS."""
@@ -105,41 +132,31 @@ class CrowdsourceClient(_GenesisClient):
     TOKENS_PER_UNIT_LOSS = 1e18  # same as the number of wei per ether
     CURRENT_ROUND_POLL_INTERVAL = 1.  # Ganache can't mine quicker than once per second
 
-    def __init__(self, name, data, targets, model_constructor, model_criterion, account_idx, contract_address=None, deploy=False):
+    def __init__(self, name, data, targets, model_constructor, model_criterion, account_idx, batch_size = 64, contract_address=None, deploy=False, device_num="0"):
         super().__init__(name,
                          model_constructor,
+                         
                          CrowdsourceContractClient,
+                         
                          account_idx,
                          contract_address,
-                         deploy)
+                         deploy,
+                         )
         self.data_length = data.__len__()
-        
-
-        # self._worker = sy.VirtualWorker(_hook, id=name)
+        self.device = torch.device('cuda:'+ device_num) if torch.cuda.is_available() else torch.device('cpu')
         self._criterion = model_criterion
-        # TODO: should actually send these to the syft worker.
-        # Temporarily stopped doing this as a workaround for subtle multithreading bugs
-        # in order to run experiments on contributivity
-        # data.to(device)
-        # targets.to(device)
         self._data = data  # .send(self._worker)
         self._targets = targets  # .send(self._worker)
-        # self._data.to(device)
-        # self._targets.to(device)
-        ###테스트 로더 수정
-        # self._test_loader = torch.utils.data.DataLoader(
-        #     sy.BaseDataset(self._data, self._targets),
-        #     batch_size=len(data)
-        # )
-        self._test_loader = torch.utils.data.DataLoader(self._data, batch_size=len(data),
+        self._test_loader = torch.utils.data.DataLoader(self._data, batch_size=batch_size,
                                          shuffle=False, num_workers=0)
         ###
         # train loader is defined each time training is run
         self._gas_history = {}
+        self._account_idx = account_idx
 
     def train_one_round(self, batch_size, epochs, learning_rate, dp_params=None):
         cur_round = self._contract.currentRound()
-        print("cur_round : ",cur_round)
+        # print("cur_round : ",cur_round)
         tx,model = self._train_single_round(
             cur_round,
             batch_size,
@@ -152,33 +169,114 @@ class CrowdsourceClient(_GenesisClient):
         self._print(f"Done training. Gas used: {self.get_gas_used()}")
 
     def train_until(self, final_round_num, batch_size, epochs, learning_rate, dp_params=None):
+        
         start_round = self._contract.currentRound()
-        # print(start_round)
         for r in range(start_round, final_round_num+1):
             self.wait_for_round(r)
-            tx,model = self._train_single_round(
-                r,
-                batch_size,
-                epochs,
-                learning_rate,
-                dp_params
-            )
-            self.wait_for_txs([tx])
-            self._gas_history[r] = self.get_gas_used()
-        self._print(f"Done training. Gas used: {self.get_gas_used()}")
+            # 라운드 시작 시 해당 라운드의 등록된 trainer인지 검사
+            account = self._contract.get_account()
+            self._print(f"Trainer account : {account}")
+            isTrainer = self._contract.isTrainer(r,account_address=account)
+            self._print(f"round {r}'s Train Flag : {isTrainer}")
+            if isTrainer:
+             # true를 반환했을 경우에는 학습 진행, 그렇지 않을 경우 학습 중단
+                tx,model = self._train_single_round(
+                    r,
+                    batch_size,
+                    epochs,
+                    learning_rate,
+                    dp_params
+                )
+                self.wait_for_txs([tx])
+                self._gas_history[r] = self.get_gas_used()
+            else : 
+                self._print(f"this trainer is eliminated.")
+                self._print(f"Done training. Gas used: {self.get_gas_used()}")
+                break
+            self._print(f"Done training. Gas used: {self.get_gas_used()}")
+            
 
-    def evaluate_until(self, final_round_num, method, scenario):
+           
+
+    def evaluate_until(self, final_round_num, method, scenario, selection_method="all"):
         self._gas_history[1] = self.get_gas_used()
         for r in range(1, final_round_num+1):
-            self.wait_for_round(r + 1)
-            scores = self._evaluate_single_round(r, method ,scenario)
+            # self.wait_for_round(r + 1)
+            self._print(f"wait for trainers...")
+            self.wait_for_round(r)
+            
+            while(self._contract.waitTrainers(r) != True):
+                time.sleep(self.CURRENT_ROUND_POLL_INTERVAL)
+            scores,accounts = self._evaluate_single_round(r, method ,scenario)
             txs = self._set_tokens(scores)
             self.wait_for_txs(txs)
-            self._gas_history[r+1] = self.get_gas_used()
+            self._gas_history[r] = self.get_gas_used()
             global_loss = self.evaluate_global(r)
             # wandb.log({"global_loss": global_loss})
+            # CS 방법선택 : random, fcfs, all(default)
+            client_list = self._contract.getCurTrainers(r)
+            self._print(client_list)
+            if selection_method == "all":
+                client_list = all_selection(client_list)
+            elif selection_method == "random":
+                client_list = random_selection(client_list)
+            elif selection_method == "fcfs":
+                client_list = fcfs_selection(client_list)
+            elif selection_method == "score_order":
+                score_list = []
+                client_list = []
+                for key,value in scores.items() :
+                    client_score = self.find_score(key, accounts[key])
+                    score_list.append(client_score)
+                    client_list.append(accounts[key])
+                client_list = score_order(client_list,score_list)
+            else:
+                self._print("Client selection method is not assigned.")
+                break
+            
+            # Save global model to IPFS and BlockChain
+            tx = self.save_global_model(r)
+
+            # 해당 라운드 Evaluation 완료
+            self._print(f"round {r} evaluation complete")
+            tx = self._contract.completeEval(r)
+            self.wait_for_txs([tx])
+
+            # 다음 라운드(r+1)의 setCurTrainer, changeMaxNumUpdates 사용해서 상태변경
+            self._print(f"client list changed by selection method '{selection_method}' : {client_list} ")
+            self._print(f"setting next round's clients ... ")
+            # for i in range (len(client_list)):
+            #     tx = self._contract.setCurTrainer(r+1,account_address = client_list[i])
+            #     self.wait_for_txs([tx])
+            tx = self._contract.setCurTrainer(r+1,account_address = client_list)
+            self.wait_for_txs([tx])
+
+            self._print(f"Changing max number of updates ... ")
+            tx = self._contract.changeMaxNumUpdates(len(client_list))
+            self.wait_for_txs([tx])
+            max_num = self._contract.getmaxNum()
+            self._print(f"max number of update : {max_num}")
+
+            if max_num == 0 :
+                break
+
+            # 라운드 넘기기
+            self._print(f"skipping round to {r+1}")
+            tx = self._contract.skipRound(r)
+            self.wait_for_txs([tx])
+        threading.Event()    
         self._print(f"Done evaluating. Gas used: {self.get_gas_used()}")
+        self.evt.set()
         
+
+    def find_score(self, model_cid, account):
+        score_info = self._contract.getScores(model_cid)
+        if(score_info[0] != account):
+            self._print(f"this account is not owner of this cid")
+            sys.exit(1)
+        else:
+            score = score_info[1]
+        return score
 
     def is_evaluator(self):
         return self._contract.evaluator() == self._contract.address
@@ -199,6 +297,13 @@ class CrowdsourceClient(_GenesisClient):
         model = self._get_global_model(training_round)
         loss = self._evaluate_model(model)
         return loss
+    
+    def save_global_model (self, training_round):
+        model = self._get_global_model(training_round)
+        # modified -> Add server's aggregation process 
+        avg_cid = self._upload_model(model)
+        tx = self._contract.saveGlobalmodel(avg_cid, training_round)
+        return tx
 
     def evaluate_current_global(self):
         """
@@ -229,16 +334,24 @@ class CrowdsourceClient(_GenesisClient):
         return self._gas_history
 
     @methodtools.lru_cache()
-    def _get_global_model(self, training_round):
-        """
-        Calculate global model at the the given training round by aggregating updates from previous round.
+    # def _get_global_model(self, training_round):
+    #     """
+    #     Calculate global model at the the given training round by aggregating updates from previous round.
 
-        This can only be done if training_round matches the current contract training round.
-        """
-        model_cids = self._get_cids(training_round - 1)
-        models = self._get_models(model_cids)
-        avg_model = self._avg_model(models)
-        return avg_model
+    #     This can only be done if training_round matches the current contract training round.
+    #     """
+    #     model_cids = self._get_cids(training_round - 1)
+    #     models = self._get_models(model_cids)
+    #     avg_model = self._avg_model(models)
+    #     return avg_model
+    
+    def _get_global_model(self, training_round):
+        if training_round == 1:
+            model_cid = self._contract.genesis()
+        else:
+            model_cid = self._contract.getGlobalmodel(training_round-1)
+        current_global_model = self._ipfs_client.get_model(model_cid)
+        return current_global_model
 
     def _train_single_round(self, round_num, batch_size, epochs, learning_rate, dp_params):
         """
@@ -246,6 +359,7 @@ class CrowdsourceClient(_GenesisClient):
         """
         model = self.get_current_global_model()
         self._print(f"Training model, round {round_num}...")
+        # self._print(f"Device Info : {self.device}")
         model = self._train_model(
             model, batch_size, epochs, learning_rate, dp_params)
         uploaded_cid = self._upload_model(model)
@@ -254,15 +368,11 @@ class CrowdsourceClient(_GenesisClient):
         return tx,model
 
     def _train_model(self, model, batch_size, epochs, lr, dp_params):
-        ### train 데이터 로더 수정
-        # train_loader = torch.utils.data.DataLoader(
-        #     sy.BaseDataset(self._data, self._targets),
-        #     batch_size=batch_size)
         train_loader = torch.utils.data.DataLoader(self._data, batch_size=batch_size,
                                           shuffle=True, num_workers=0)
         ###
         # model = model.send(self._worker)
-        model.to(device)
+        model.to(self.device)
         model.train()
         if dp_params is not None:
             eps = epsilon(
@@ -301,8 +411,7 @@ class CrowdsourceClient(_GenesisClient):
     def _evaluate_model(self, model, *localFlag):
         model = model  # .send(self._worker)
         # print(model)
-        model.to(device)
-        # self._test_loader.to(device)
+        model.to(self.device)
         model.eval()
         with torch.no_grad():
             total_loss = 0
@@ -349,7 +458,6 @@ class CrowdsourceClient(_GenesisClient):
 
     def _avg_model(self, models):
         avg_model = self._model_constructor()
-        # avg_model.to(device)
         with torch.no_grad():
             for params in avg_model.parameters():
                 params *= 0
@@ -372,24 +480,24 @@ class CrowdsourceClient(_GenesisClient):
                 return self._marginal_value(training_round, *c)
             scores = contribution.shapley_values(
                 characteristic_function, cids)
+           
             if scenario == 'crowdsource':
                 # Connect to wandb
                 for index, score in enumerate(scores) :
                     trainer_name = "SV_trainer"+str(index+1)
-                    print(trainer_name,type(scores[score]))
-                    wandb.log({trainer_name: scores[score]})
+                    # wandb.log({trainer_name: scores[score]})
             elif scenario == 'consortium':
                 # Connect to wandb
                 print("test")
             else : 
                 print("Error - Input scenario first")
-        # if method == 'step':
-        #     scores = {}
-        #     idx = 0
-        #     for cid in cids:
-        #         scores[cid] = self._marginal_value(training_round, cid)
-        #         print(idx)
-        #         print(scores[cid])
+        if method == 'step': # marginal-gain
+            scores = {}
+            idx = 0
+            for cid in cids:
+                scores[cid] = self._marginal_value(training_round, cid)
+                print(idx)
+                print(scores[cid])
         if method == 'loo':
             def characteristic_function(*c):
                 return self._marginal_value(training_round,*c)
@@ -399,17 +507,27 @@ class CrowdsourceClient(_GenesisClient):
                 # Connect to wandb
                 for index, score in enumerate(scores) :
                     trainer_name = "SV_trainer"+str(index+1)
-                    print(trainer_name,type(scores[score]))
-                    wandb.log({trainer_name: scores[score]})
+                    # wandb.log({trainer_name: scores[score]})
             elif scenario == 'consortium':
                 # Connect to wandb
                 print("test")
             else : 
                 print("Error - Input scenario first")
-
+        ## 작업 중 : gradeOrder CS
+        accounts = {}
+        for key, value in scores.items():
+            ## key : cid
+            ## value : score
+            client_account = self._contract.getAccountfromUpdate(key)
+            accounts[key] = client_account
+            client_score = int(value * self.TOKENS_PER_UNIT_LOSS)
+            tx = self._contract.saveScores(key,client_account, client_score)
+            self.wait_for_txs([tx])
+            # score = self._contract.getScores(key)
+        ## 작업 중 : gradeOrder CS  
         self._print(
             f"Scores in round :{training_round} are :{list(scores.values())}: and cids :{cids}")
-        return scores
+        return scores,accounts
 
     def _set_tokens(self, cid_scores):
         """
@@ -455,8 +573,12 @@ class ConsortiumSetupClient(_GenesisClient):
         self._print(f"Setting {len(evaluators)} auxiliaries...")
         txs = []
         for evaluator in evaluators:
+            trainer_list = []
+            for trainer in evaluators:
+                if trainer is not evaluator:
+                    trainer_list.append(trainer)
             txs.append(
-                self._contract.addAux(evaluator)
+                self._contract.addAux(evaluator,trainer_list)
             )
         self.wait_for_txs(txs)
 
@@ -471,7 +593,7 @@ class ConsortiumClient(_BaseClient):
     Full client for the Consortium Protocol.
     """
 
-    def __init__(self, name, data, targets, model_constructor, model_criterion, account_idx, contract_address=None, deploy=False):
+    def __init__(self, name, data, targets, model_constructor, model_criterion, account_idx, batch_size = 64,contract_address=None, deploy=False, device_num="0"):
         super().__init__(name,
                          model_constructor,
                          ConsortiumContractClient,
@@ -487,8 +609,11 @@ class ConsortiumClient(_BaseClient):
                                               model_constructor,
                                               model_criterion,
                                               account_idx,
-                                              contract_address=self._contract.main())
+                                              batch_size=batch_size,
+                                              contract_address=self._contract.main(),
+                                              device_num=device_num)
         self._aux_clients = {}  # cache, updated every time self._get_aux_clients() is called
+        self.device_num = device_num
 
     def train_until(self, final_round_num, batch_size, epochs, learning_rate, dp_params=None):
         train_clients = self._get_train_clients()
@@ -504,12 +629,15 @@ class ConsortiumClient(_BaseClient):
         for t in threads:
             t.join()
 
-    def evaluate_until(self, final_training_round, method, scenario):
+    def evaluate_until(self, final_training_round, method, scenario,selection_method="all"):
         eval_clients = self._get_eval_clients()
         threads = [
             threading.Thread(
                 target=eval_client.evaluate_until,
                 args=(final_training_round, method,scenario),
+                kwargs = {
+                    "selection_method" : selection_method
+                },
                 daemon=True
             ) for eval_client in eval_clients
         ]
@@ -567,7 +695,8 @@ class ConsortiumClient(_BaseClient):
                     self._model_constructor,
                     self._criterion,
                     self._account_idx,
-                    contract_address=aux
+                    contract_address=aux,
+                    device_num=self.device_num
                 )
         # No need to check to remove aux clients as the contract does not allow it
         return self._aux_clients.values()

@@ -1,4 +1,5 @@
-pragma solidity >=0.4.21 <0.7.0;
+// pragma solidity >=0.4.21 <0.7.0;
+pragma solidity ^0.8.6;
 
 import "./Crowdsource.sol";
 
@@ -14,6 +15,14 @@ contract Consortium {
     uint256 internal roundDuration;
 
     uint256 internal numTrainers;
+
+    address internal account;
+
+    uint256 internal round;
+
+    address internal contractAddress;
+
+    address internal evaluator;
 
     constructor() public {
         Crowdsource main = new Crowdsource();
@@ -62,19 +71,40 @@ contract Consortium {
     function setGenesis(
         bytes32 _cid,
         uint256 _roundDuration,
-        uint256 _numTrainers
+        uint256 _numTrainers,
+        address[] calldata accounts
     ) external {
         genesis = _cid;
         roundDuration = _roundDuration;
         numTrainers = _numTrainers;
         Crowdsource main = Crowdsource(mainAddress);
-        main.setGenesis(genesis, roundDuration, numTrainers);
+        main.setGenesis(genesis, roundDuration, numTrainers, accounts);
     }
 
-    function addAux(address _evaluator) external {
+    function setConsCurTrainer (address[] calldata _address, uint256 _round, address _contractAddress) external {
+        // account = _address;
+        // round = _round;
+        // contractAddress = _contractAddress;
+        Crowdsource cont = Crowdsource(_contractAddress);
+        cont.setCurTrainer(_address,round);
+    }
+
+    // function setConsEvaluator (address _evaluator, address _contractAddress) external {
+    //     evaluator = _evaluator;
+    //     Crowdsource cont = Crowdsource(_contractAddress);
+    //     cont.setEvaluator(evaluator);
+    // }
+
+    // function setAuxCurTrainer (address _address, uint256 _round) external {
+    //     Crowdsource aux = Crowdsource(auxAddresses);
+    //     aux.setCurTrainer(_address,_round);
+    // }
+
+
+    function addAux(address _evaluator, address[] calldata accounts) external {
         require(genesis != 0, "Genesis not set");
         Crowdsource aux = new Crowdsource();
-        aux.setGenesis(genesis, roundDuration, numTrainers-1);
+        aux.setGenesis(genesis, roundDuration, numTrainers-1, accounts);
         aux.setEvaluator(_evaluator);
         auxAddresses.push(address(aux));
     }

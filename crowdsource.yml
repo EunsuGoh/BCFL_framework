@@ -1,0 +1,19 @@
+version: "3.7"
+
+services: 
+  evaluator:
+    hostname: evaluator
+    image: crowdsource
+    entrypoint: /root/crowdsource/run_evaluator.sh
+    environment:
+      - IPFS_API=/dns/cwd-ipfs-1/tcp/5001
+      - PROVIDER=http://cwd-ganache-1:7545
+    privileged: true
+    extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+
+networks:
+  default:
+    external:
+      name: bcflnet
