@@ -52,7 +52,7 @@ contract Crowdsource {
 
     struct ScoreandAccount {
         address account;
-        uint256 score;
+        int256 score;
     }
 
     /// @dev Account, Scores by cids 
@@ -80,7 +80,7 @@ contract Crowdsource {
         return globalmodel[_round];
     }
 
-    function saveScores(bytes32 _cid, address _address, uint256 _score) external evaluatorOnly(){
+    function saveScores(bytes32 _cid, address _address, int256 _score) external evaluatorOnly(){
         score[_cid] = ScoreandAccount(_address,_score);
     }
 

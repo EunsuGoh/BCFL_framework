@@ -9,12 +9,21 @@ class BaseEthClient:
     An ethereum client.
     """
 
+    # Ganache
     PROVIDER_ADDRESS = "http://127.0.0.1:7545"
     NETWORK_ID = "5777"
+    
+    # # Hyperledger besu
+    # PROVIDER_ADDRESS = "http://127.0.0.1:8545"
+    # NETWORK_ID = "1337"
+
 
     def __init__(self, account_idx):
         self._w3 = Web3(HTTPProvider(self.PROVIDER_ADDRESS)) #json rpc 서버 연결(가나슈)
-
+        accounts = self._w3.eth.accounts
+        # flag = self._w3.isConnected() # true
+        # privateKeyA = "0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3"
+        # accountA = self._w3.eth.account.privateKeyToAccount(privateKeyA)
         self.address = self._w3.eth.accounts[account_idx] # 이더리움 지갑주소
         self._w3.eth.defaultAccount = self.address # 지정된 지갑주소를 기본주소로
 

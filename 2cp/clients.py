@@ -299,11 +299,27 @@ class CrowdsourceClient(_GenesisClient):
         return loss
     
     def save_global_model (self, training_round):
-        model = self._get_global_model(training_round)
+        # get_global_model 사용 시 이전 라운드*(r-1) 의 글로벌 모델을 받아옴
+        # 따라서 현재 라운드 저장이 필요,,
+        # 1. _avg_global_model 사용해서 aggregation된 현재 라운드 글로벌 모델 생성
+        # model = self._get_global_model(training_round)
+        model = self._avg_global_model(training_round)
         # modified -> Add server's aggregation process 
         avg_cid = self._upload_model(model)
         tx = self._contract.saveGlobalmodel(avg_cid, training_round)
         return tx
+
+    def _avg_global_model(self, training_round):
+        avg_model = self._model_constructor()
+        cids = self._get_cids(training_round)
+        models = self._get_models(cids)
+        with torch.no_grad():
+            for params in avg_model.parameters():
+                params *= 0
+            for client_model in models:
+                for avg_param, client_param in zip(avg_model.parameters(), client_model.parameters()):
+                    avg_param += client_param / len(models)
+        return avg_model
 
     def evaluate_current_global(self):
         """
@@ -391,6 +407,7 @@ class CrowdsourceClient(_GenesisClient):
                 noise_multiplier=dp_params['noise_multiplier']
             )
         else:
+            
             optimizer = torch.optim.SGD(
                 params=model.parameters(),
                 lr=lr,
@@ -513,7 +530,7 @@ class CrowdsourceClient(_GenesisClient):
                 print("test")
             else : 
                 print("Error - Input scenario first")
-        ## 작업 중 : gradeOrder CS
+
         accounts = {}
         for key, value in scores.items():
             ## key : cid
@@ -524,7 +541,7 @@ class CrowdsourceClient(_GenesisClient):
             tx = self._contract.saveScores(key,client_account, client_score)
             self.wait_for_txs([tx])
             # score = self._contract.getScores(key)
-        ## 작업 중 : gradeOrder CS  
+
         self._print(
             f"Scores in round :{training_round} are :{list(scores.values())}: and cids :{cids}")
         return scores,accounts

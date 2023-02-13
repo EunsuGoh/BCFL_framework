@@ -52,17 +52,21 @@ class MyMnist(Dataset):
 #   return data,targets
 
 ##### For client data saving
-trainers = ["trainer1","trainer2","trainer3","trainer4"]
+trainers = []
+for i in range (30):
+  trainers.append("trainer"+str(i+1))
+print(trainers)
+
 evaluator = "evaluator"
 
-test_data_path = "/home/dy/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/all_data_0_niid_2_keep_0_test_9.json"
-train_data_path = "/home/dy/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/all_data_0_niid_2_keep_0_train_9.json"
+test_data_path = "/media/hdd1/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/all_data_0_niid_05_keep_0_test_9.json"
+train_data_path = "/media/hdd1/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/all_data_0_niid_05_keep_0_train_9.json"
 
 
 
 """ 데이터 생성이 필요할 시 주석 해제하고 사용 """
 # /home/dy/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/user_data/evaluator_data.json
-with open("/home/dy/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/user_data/"+str(evaluator)+"_data.json","w") as f:
+with open("/media/hdd1/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/user_data/"+str(evaluator)+"_data.json","w") as f:
     json_format = {
       "name": evaluator,
       "x":[],
@@ -70,7 +74,7 @@ with open("/home/dy/es_workspace/BCFL_framework_es/crowdsource_back/back/src/con
     }
     json.dump(json_format,f)
 for trainer in trainers:
-  with open("/home/dy/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/user_data/"+str(trainer)+"_data.json","w") as f:
+  with open("/media/hdd1/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/user_data/"+str(trainer)+"_data.json","w") as f:
     json_format = {
       "name": trainer,
       "x":[],
@@ -86,7 +90,7 @@ with open(test_data_path,'r') as f:
   user_data = data_json['user_data']
   print("users length : ",len(users))
   print("sum of test datas : ",sum(data_json["num_samples"]))
-  save_file_path = "/home/dy/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/user_data/"
+  save_file_path = "/media/hdd1/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/user_data/"
   for idx in range(len(users)):  
     client_data = user_data[users[idx]]
     client_data_x = client_data["x"]
@@ -107,47 +111,49 @@ with open(train_data_path,'r') as f:
   user_data = data_json['user_data']
   print("users length : ",len(users))
   print("sum of train datas : ",sum(data_json["num_samples"]))
-  save_file_path = "/home/dy/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/user_data/"
+  save_file_path = "/media/hdd1/es_workspace/BCFL_framework_es/crowdsource_back/back/src/controller/utils/pytorch_femnist/data/user_data/"
+  trainer_idx = 0
   for idx in range(len(users)): 
-    print(idx) 
+    # print(idx) 
     client_data = user_data[users[idx]]
     client_data_x = client_data["x"]
     client_data_y = client_data["y"]
-    if idx%4 ==0:
-      ## trainer1's data
-      with open(save_file_path+trainers[0]+"_data.json",'r') as f:
+    if idx%30 ==0:
+      # ## start from trainer1
+      trainer_idx = 0
+      with open(save_file_path+trainers[trainer_idx]+"_data.json",'r') as f:
         json_object = json.load(f)
       json_object["x"] = json_object["x"] + client_data_x
       json_object["y"] = json_object["y"] + client_data_y
-      with open(save_file_path+trainers[0]+"_data.json",'w') as f:
+      with open(save_file_path+trainers[trainer_idx]+"_data.json",'w') as f:
         json.dump(json_object,f)
+      trainer_idx+=1
   
-    elif idx%4 == 1:
-      ## trainer2's data
-      with open(save_file_path+trainers[1]+"_data.json",'r') as f:
+    else:
+      with open(save_file_path+trainers[trainer_idx]+"_data.json",'r') as f:
         json_object = json.load(f)
       json_object["x"] = json_object["x"] + client_data_x
       json_object["y"] = json_object["y"] + client_data_y
-      with open(save_file_path+trainers[1]+"_data.json",'w') as f:
+      with open(save_file_path+trainers[trainer_idx]+"_data.json",'w') as f:
         json.dump(json_object,f)
+      trainer_idx+=1
+    # elif idx%4 ==2 :
+    #   ##trainer3's data
+    #   with open(save_file_path+trainers[2]+"_data.json",'r') as f:
+    #     json_object = json.load(f)
+    #   json_object["x"] = json_object["x"] + client_data_x
+    #   json_object["y"] = json_object["y"] + client_data_y
+    #   with open(save_file_path+trainers[2]+"_data.json",'w') as f:
+    #     json.dump(json_object,f)
         
-    elif idx%4 ==2 :
-      ##trainer3's data
-      with open(save_file_path+trainers[2]+"_data.json",'r') as f:
-        json_object = json.load(f)
-      json_object["x"] = json_object["x"] + client_data_x
-      json_object["y"] = json_object["y"] + client_data_y
-      with open(save_file_path+trainers[2]+"_data.json",'w') as f:
-        json.dump(json_object,f)
-        
-    else :
-      ## trainer4's data
-      with open(save_file_path+trainers[3]+"_data.json",'r') as f:
-        json_object = json.load(f)
-      json_object["x"] = json_object["x"] + client_data_x
-      json_object["y"] = json_object["y"] + client_data_y
-      with open(save_file_path+trainers[3]+"_data.json",'w') as f:
-        json.dump(json_object,f)
+    # else :
+    #   ## trainer4's data
+    #   with open(save_file_path+trainers[3]+"_data.json",'r') as f:
+    #     json_object = json.load(f)
+    #   json_object["x"] = json_object["x"] + client_data_x
+    #   json_object["y"] = json_object["y"] + client_data_y
+    #   with open(save_file_path+trainers[3]+"_data.json",'w') as f:
+    #     json.dump(json_object,f)
 """ 데이터 생성이 필요할 시 주석 해제하고 사용 """
 
 #   for user in users:

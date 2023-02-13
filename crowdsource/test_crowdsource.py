@@ -10,6 +10,7 @@ from test_utils.functions import same_weights
 from crowdsource_conf import config
 import os
 import json
+import re
 
 TRAINING_ITERATIONS = config['TRAINING_ITERATIONS']
 TRAINING_HYPERPARAMS = config['TRAINING_HYPERPARAMS']
@@ -46,15 +47,15 @@ def test_crowdsource():
 
     for trainer in trainers :
         print("client is deploying....")
-        trainer_index = trainer[-1:]
+        trainer_index = re.sub(r'[^0-9]','',trainer)
         # your trainset Path
         trainset_path = os.path.realpath(os.path.dirname(__file__))+'/data/user_data/'+trainer+'_data.json'
         with open(trainset_path,'r') as f:
             train_dataset = json.load(f)
             train_data = train_dataset['x']
             train_targets = train_dataset['y']
-        my_train_data = MyData(train_data, train_targets, True,device_num=str(trainer_index))
-        train_client = CrowdsourceClient(trainer,my_train_data,train_targets,Mymodel, F.cross_entropy,int(trainer_index),contract_address=evaluator.contract_address, device_num= str(trainer_index))
+        my_train_data = MyData(train_data, train_targets, True,device_num=str(trainer_index[-1:]))
+        train_client = CrowdsourceClient(trainer,my_train_data,train_targets,Mymodel, F.cross_entropy,int(trainer_index),contract_address=evaluator.contract_address, device_num= str(trainer_index[-1:]))
         train_clients.append(train_client)
 
     evaluator.set_genesis_model(

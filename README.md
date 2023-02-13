@@ -54,7 +54,7 @@
 
 
 # run test consortium code
-1. ganache-cli --port=7545 --networkId 5777
+1. ganache-cli --port=7545 --networkId 5777 -a 31 
 2. ipfs daemon
 3. truffle migrate --network development --reset
 4. cd consortium
@@ -68,6 +68,9 @@
 4. cd crowdsource
 5. Edit crowdsource_conf.py
 6. python test_consortium.py
+
+
+=================================================================================
 
 # run test crowdsource code with front page
 1. ganache-cli --port=7545
