@@ -1,5 +1,4 @@
 import random
-import math
 
 # random trainers
 def random_selection(client_list):

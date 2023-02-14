@@ -11,6 +11,10 @@ from crowdsource_conf import config
 import os
 import json
 import re
+import random
+import numpy as np
+import torch.backends.cudnn as cudnn
+
 
 TRAINING_ITERATIONS = config['TRAINING_ITERATIONS']
 TRAINING_HYPERPARAMS = config['TRAINING_HYPERPARAMS']
@@ -20,6 +24,13 @@ ROUND_DURATION = config['ROUND_DURATION']
 SELECTION_METHOD = config['SELECTION_METHOD']
 
 torch.manual_seed(TORCH_SEED)
+torch.cuda.manual_seed(TORCH_SEED)
+torch.cuda.manual_seed_all(TORCH_SEED)
+np.random.seed(TORCH_SEED)
+cudnn.benchmark = False
+cudnn.deterministic = True
+random.seed(TORCH_SEED)
+# torch.manual_seed(TORCH_SEED)
 
 def test_crowdsource():
   # Define Eval data

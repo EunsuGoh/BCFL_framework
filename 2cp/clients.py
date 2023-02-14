@@ -21,7 +21,6 @@ import os
 import threading
 from client_selection import random_selection,fcfs_selection,all_selection,score_order
 
-
 # device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 # print(device)
 # wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
@@ -553,8 +552,10 @@ class CrowdsourceClient(_GenesisClient):
         txs = []
         self._print(f"Setting {len(cid_scores.values())} scores...")
         for cid, score in cid_scores.items():
+            score_info = self._contract.getScores(cid)
+            account = score_info[0]
             num_tokens = max(0, int(score * self.TOKENS_PER_UNIT_LOSS))
-            self._print(f"cid :{cid} score :{score}: and tokens :{num_tokens}")
+            self._print(f"account : {account} cid :{cid} score :{score}: and tokens :{num_tokens}")
             tx = self._contract.setTokens(cid, num_tokens)
             txs.append(tx)
         return txs

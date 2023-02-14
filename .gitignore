@@ -9,3 +9,4 @@ quorum-test-network/
 besu_api.json
 ipfs
 test_rppg
+package-lock.json
