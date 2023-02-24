@@ -30,6 +30,8 @@ np.random.seed(TORCH_SEED)
 cudnn.benchmark = False
 cudnn.deterministic = True
 random.seed(TORCH_SEED)
+# torch.use_deterministic_algorithms(True)
+os.environ["PYTHONHASHSEED"] = str(TORCH_SEED)
 # torch.manual_seed(TORCH_SEED)
 
 def test_crowdsource():
@@ -69,6 +71,21 @@ def test_crowdsource():
         train_client = CrowdsourceClient(trainer,my_train_data,train_targets,Mymodel, F.cross_entropy,int(trainer_index),contract_address=evaluator.contract_address, device_num= str(trainer_index[-1:]))
         train_clients.append(train_client)
 
+    # # ISSUEING DID Process
+    # n = round(len(trainers)*0.3) # only 30% of trainers can issue did
+
+    # for index, trainer in enumerate(train_clients):
+    #     if(index <= n):
+    #         account_list_path = os.getcwd()
+    #         with open(account_list_path+"/accounts.json","r") as f:
+    #             data = json.load(f)
+    #             # print(data[trainer.address.lower()])
+    #             pubkey = data[trainer.address.lower()]['pubkey']
+    #             privkey = data[trainer.address.lower()]['privkey']
+    #             trainer.issueHolderDID(pubkey,privkey) #error
+
+        
+
     evaluator.set_genesis_model(
         round_duration=ROUND_DURATION,
         max_num_updates=config['NUMBER_OF_TRAINERS'],
@@ -105,7 +122,7 @@ def test_crowdsource():
     for trainer in train_clients:
         print_token_count(trainer)
     
-    final_global_model_cid = evaluator._get_global_model(TRAINING_ITERATIONS+1)
-    print(final_global_model_cid)
+    final_global_model = evaluator._get_global_model(TRAINING_ITERATIONS+1)
+    print(final_global_model)
 
 test_crowdsource()
