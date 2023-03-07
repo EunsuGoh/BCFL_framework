@@ -20,6 +20,11 @@ import sys
 import os
 import threading
 from client_selection import random_selection,fcfs_selection,all_selection,score_order
+import random
+from collections import OrderedDict
+
+import wandb
+
 
 # device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 # print(device)
@@ -131,7 +136,7 @@ class CrowdsourceClient(_GenesisClient):
     TOKENS_PER_UNIT_LOSS = 1e18  # same as the number of wei per ether
     CURRENT_ROUND_POLL_INTERVAL = 1.  # Ganache can't mine quicker than once per second
 
-    def __init__(self, name, data, targets, model_constructor, model_criterion, account_idx, batch_size = 64, contract_address=None, deploy=False, device_num="0"):
+    def __init__(self, name, data, targets, model_constructor, model_criterion, account_idx, batch_size = 64, contract_address=None, deploy=False, device_num="0",did_address=None):
         super().__init__(name,
                          model_constructor,
                          
@@ -141,17 +146,26 @@ class CrowdsourceClient(_GenesisClient):
                          contract_address,
                          deploy,
                          )
+        self.did = did_address
         self.data_length = data.__len__()
+        self.g = torch.Generator()
+        self.g.manual_seed(8888)
         self.device = torch.device('cuda:'+ device_num) if torch.cuda.is_available() else torch.device('cpu')
         self._criterion = model_criterion
         self._data = data  # .send(self._worker)
         self._targets = targets  # .send(self._worker)
         self._test_loader = torch.utils.data.DataLoader(self._data, batch_size=batch_size,
-                                         shuffle=False, num_workers=0)
+                                         shuffle=False, num_workers=0, worker_init_fn =self.seed_worker , generator = self.g)
         ###
         # train loader is defined each time training is run
         self._gas_history = {}
         self._account_idx = account_idx
+        
+
+    def seed_worker(worker_id):
+        worker_seed = torch.initial_seed() % 2**32
+        np.random.seed(worker_seed)
+        random.seed(worker_seed)
 
     def train_one_round(self, batch_size, epochs, learning_rate, dp_params=None):
         cur_round = self._contract.currentRound()
@@ -235,8 +249,7 @@ class CrowdsourceClient(_GenesisClient):
             
             # Save global model to IPFS and BlockChain
             tx = self.save_global_model(r)
-
-            # 해당 라운드 Evaluation 완료
+            # 해당 라운드 Esave_glovaluation 완료
             self._print(f"round {r} evaluation complete")
             tx = self._contract.completeEval(r)
             self.wait_for_txs([tx])
@@ -303,21 +316,52 @@ class CrowdsourceClient(_GenesisClient):
         # 1. _avg_global_model 사용해서 aggregation된 현재 라운드 글로벌 모델 생성
         # model = self._get_global_model(training_round)
         model = self._avg_global_model(training_round)
+        # for param in model.parameters():
+        #     self._print(f"{param}")
         # modified -> Add server's aggregation process 
         avg_cid = self._upload_model(model)
         tx = self._contract.saveGlobalmodel(avg_cid, training_round)
+        # torch.save(model.state_dict(),"/media/hdd1/es_workspace/BCFL_framework_es/crowdsource/avg_model1.pth")
         return tx
 
     def _avg_global_model(self, training_round):
         avg_model = self._model_constructor()
         cids = self._get_cids(training_round)
         models = self._get_models(cids)
-        with torch.no_grad():
-            for params in avg_model.parameters():
-                params *= 0
-            for client_model in models:
-                for avg_param, client_param in zip(avg_model.parameters(), client_model.parameters()):
-                    avg_param += client_param / len(models)
+        # with torch.no_grad():
+        #     for params in avg_model.parameters():
+        #         params *= 0
+        #     for client_model in models:
+        #         for avg_param, client_param in zip(avg_model.parameters(), client_model.parameters()):
+        #             avg_param += client_param
+        #     avg_param = avg_param / len(models)
+        averaged_weights = []
+
+        # averaged_weights = self.average_ordered_dict_values(models)
+
+        # for 
+
+        for layer_index in range(len(avg_model.state_dict().keys())):
+            model_weights = []
+            for model in models:
+                # for value in list(model.state_dict().values())[layer_index]:
+                #     value = torch.trunc(value*1000) / 1000
+                    # self._print(value)
+                model_weights.append(list(model.state_dict().values())[layer_index])
+            # 여기 수정
+            # for model_weight in model_weights:
+            # model_weights = torch.Tensor(model_weights)
+            averaged_layer_weights = torch.mean(torch.stack(model_weights,dim=0),dim=0)
+            # averaged_layer_weights = torch.trunc((sum(model_weights) / len(model_weights))*1000)*1000
+            # averaged_layer_weights = averaged_layer_weights/len(model_weights)
+            averaged_layer_weights = averaged_layer_weights*100
+            averaged_layer_weights = torch.trunc(averaged_layer_weights)
+            averaged_layer_weights = averaged_layer_weights/100
+
+            averaged_weights.append(averaged_layer_weights)
+        
+        avg_model.load_state_dict(dict(zip(avg_model.state_dict().keys(),averaged_weights)))
+
         return avg_model
 
     def evaluate_current_global(self):
@@ -373,6 +417,7 @@ class CrowdsourceClient(_GenesisClient):
         Run a round of training using own data, upload and record the contribution.
         """
         model = self.get_current_global_model()
+        # global_params = list(model.parameters())
         self._print(f"Training model, round {round_num}...")
         # self._print(f"Device Info : {self.device}")
         model = self._train_model(
@@ -380,12 +425,17 @@ class CrowdsourceClient(_GenesisClient):
         uploaded_cid = self._upload_model(model)
         self._print(f"Adding model update..., local model cid : {uploaded_cid}, round : {round_num}")
         tx = self._record_model(uploaded_cid, round_num)
+        # params = list(model.parameters())
         return tx,model
 
     def _train_model(self, model, batch_size, epochs, lr, dp_params):
+        
         train_loader = torch.utils.data.DataLoader(self._data, batch_size=batch_size,
-                                          shuffle=True, num_workers=0)
-        ###
+                                          shuffle=True, num_workers=0, worker_init_fn =self.seed_worker, generator=self.g)
+        # if self.did is None :
+        #     transform = transforms.Compose([transforms.RandomHorizontalFlip(p=1.0)])
+        #     train_loader = train_loader.transform(transform)
+        # ##
         # model = model.send(self._worker)
         model.to(self.device)
         model.train()
@@ -420,7 +470,7 @@ class CrowdsourceClient(_GenesisClient):
                 loss.backward()
                 optimizer.step()
                 # wandb.watch(model)
-                # wandb.log({"loss": loss})
+                # wandb.log({f"trainer{self._account_idx} loss": loss})
         # model.get()
         return model
 
@@ -434,16 +484,15 @@ class CrowdsourceClient(_GenesisClient):
             for data, labels in self._test_loader:
                 # data.to(device)
                 # print(data.size())
+
                 pred = model(data)
                 # print("prediction : ",pred)
                 # print("label : ",labels)
                 total_loss += self._criterion(pred, labels
                                               ).item()
                 # ).get().item()
+        
         avg_loss = total_loss / len(self._test_loader)
-        ##HERE!
-        # if localFlag:
-            # wandb.log({"avg_loss": avg_loss})
         return avg_loss
 
     def _record_model(self, uploaded_cid, training_round):
@@ -474,13 +523,37 @@ class CrowdsourceClient(_GenesisClient):
 
     def _avg_model(self, models):
         avg_model = self._model_constructor()
-        with torch.no_grad():
-            for params in avg_model.parameters():
-                params *= 0
-            for client_model in models:
-                for avg_param, client_param in zip(avg_model.parameters(), client_model.parameters()):
-                    avg_param += client_param / len(models)
+        averaged_weights = []
+        # with torch.no_grad():
+        #     for params in avg_model.parameters():
+        #         params *= 0
+        #     for client_model in models:
+        #         for avg_param, client_param in zip(avg_model.parameters(), client_model.parameters()):
+        #             avg_param += client_param / len(models)
+        # return avg_model
+        for layer_index in range(len(avg_model.state_dict().keys())):
+            model_weights = []
+            for model in models:
+                # for value in list(model.state_dict().values())[layer_index]:
+                    # value = torch.trunc(value*1000) / 1000
+                    # self._print(value)
+                model_weights.append(list(model.state_dict().values())[layer_index])
+            # 여기 수정
+            # for model_weight in model_weights:
+            # model_weights = torch.Tensor(model_weights)
+            averaged_layer_weights = torch.mean(torch.stack(model_weights,dim=0),dim=0)
+            # averaged_layer_weights = torch.trunc((sum(model_weights) / len(model_weights))*1000)*1000
+            # averaged_layer_weights = averaged_layer_weights/len(model_weights)
+            averaged_layer_weights = averaged_layer_weights*100
+            averaged_layer_weights = torch.trunc(averaged_layer_weights)
+            averaged_layer_weights = averaged_layer_weights/100
+
+            averaged_weights.append(averaged_layer_weights)
+        
+        avg_model.load_state_dict(dict(zip(avg_model.state_dict().keys(),averaged_weights)))
+
         return avg_model
+
 
     def _evaluate_single_round(self, training_round, method, scenario):
         """
@@ -519,6 +592,7 @@ class CrowdsourceClient(_GenesisClient):
                 return self._marginal_value(training_round,*c)
             scores = contribution.loo(
                 characteristic_function,cids)
+
             if scenario == 'crowdsource':
                 # Connect to wandb
                 for index, score in enumerate(scores) :
@@ -561,7 +635,6 @@ class CrowdsourceClient(_GenesisClient):
         return txs
 
     @methodtools.lru_cache()
-    #기여도측정?
     def _marginal_value(self, training_round, *update_cids):
         """
         The characteristic function used to calculate Shapley Value.
@@ -569,9 +642,11 @@ class CrowdsourceClient(_GenesisClient):
         of the average of their models
         """
         start_loss = self.evaluate_global(training_round)
-        models = self._get_models(update_cids)
+        models = self._get_models(update_cids) 
         avg_model = self._avg_model(models)
+        #avg model loss -> NaN (step, all)
         loss = self._evaluate_model(avg_model,True)
+        
         return start_loss - loss
 
 class ConsortiumSetupClient(_GenesisClient):
@@ -621,6 +696,7 @@ class ConsortiumClient(_BaseClient):
         self._data = data
         self._targets = targets
         self._criterion = model_criterion
+        self.name = name
         self._main_client = CrowdsourceClient(name + " (main)",
                                               data,
                                               targets,

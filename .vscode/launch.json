@@ -11,6 +11,14 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true
-        }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program",
+            "program": "/media/hdd1/es_workspace/BCFL_framework_es/crowdsource/src/did.ts",
+            "preLaunchTask": "tsc: build - tsconfig.json",
+            "outFiles": ["/media/hdd1/es_workspace/BCFL_framework_es/crowdsource/src/out/**/*.js"]
+          }
     ]
 }

@@ -94,3 +94,7 @@
         (*Warning : TRAINER_INDEX shoul start from 1)
 
 
+tsc build
+- tsc did.ts --esModuleInterop --resolveJsonModule
+
+

@@ -4,19 +4,26 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
 import torch.nn.functional as F
+from torchvision import transforms
 
 class MyData(Dataset):
     ## Edit below here
-    def __init__(self,data,targets,*trainFlag,device_num="0"):
+    def __init__(self,data,targets,*trainFlag,device_num="0", did_address = None, eval_flag = False):
       if trainFlag:
         # _data = data.astype(np.float32) 
         _data = torch.tensor(data)
         _data = _data.type(torch.FloatTensor)
         _targets = torch.tensor(targets)
+        self.device = torch.device('cuda:'+ device_num) if torch.cuda.is_available() else torch.device('cpu')
+        self.transform = transforms.Compose([
+            transforms.RandomHorizontalFlip(p=0.02)
+        ])
+        self.did_address = did_address
         self.x_data=_data
         self.y_data=_targets
+        self.eval_flag = eval_flag
         self.len = len(self.x_data)
-        self.device = torch.device('cuda:'+ device_num) if torch.cuda.is_available() else torch.device('cpu')
+
     @torch.no_grad()
 
     def __getitem__(self,index):
@@ -24,8 +31,13 @@ class MyData(Dataset):
         if torch.cuda.is_available():
           x_data = self.x_data[index].reshape(28,28)
           x_data =  x_data.unsqueeze(0)
+          y_data = self.y_data[index]
+          # If train client Doesn't have did, label filpped
+          if self.did_address is None and self.eval_flag is False:
+            x_data = self.transform(x_data)
+            y_data = torch.tensor(torch.max(self.y_data)-y_data)
           x_data = x_data.to(self.device)
-          y_data = self.y_data[index].to(self.device)
+          y_data = y_data.to(self.device)
           return x_data, y_data
     
     def __len__(self):

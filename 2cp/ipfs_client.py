@@ -29,7 +29,10 @@ class IPFSClient:
         return model
 
     def add_model(self, model):
+        # params = list(model.parameters())
+        # param = params[0]
         buffer = io.BytesIO()
+        check = model.state_dict()
         torch.save(model.state_dict(), buffer)
         buffer.seek(0)
         with ipfshttpclient.connect(self._ipfs_api) as ipfs:
