@@ -71,6 +71,12 @@
 
 
 =================================================================================
+# run crowdsource(DAE)
+1. ganache-cli --port 7545 --networkId 5777 -a 31 -d
+2. ipfs daemon
+3. truffle migrate --network development --reset
+4. cd crowdsource
+5. python test_crowdsource.py
 
 # run test crowdsource code with front page
 1. ganache-cli --port=7545
