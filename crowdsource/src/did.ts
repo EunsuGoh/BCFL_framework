@@ -15,10 +15,6 @@ const Web3 = require('web3')
 import { Resolver } from "did-resolver";
 import { getResolver } from "ethr-did-resolver";
 
-
-
-// const provider = new Web3.providers.HttpProvider("http://127.0.0.1:7545")
-// const web3 = new Web3(provider);
 const rpcURL = "http://127.0.0.1:7545"; // ganache
 const provider = new ethers.providers.JsonRpcProvider(rpcURL);
 
@@ -78,7 +74,6 @@ const issueVC = async (did,issuerPub,issuerPriv)=>{
       "@context": ["https://www.w3.org/2018/credentials/v1"],
       type: ["VerifiableCredential"],
       credentialSubject: {
-        // GOVERN_FA_PASSPORT Inner join GOVERN_USER_CLIENT
         trainer : {
           did
         }
@@ -92,8 +87,7 @@ const issueVC = async (did,issuerPub,issuerPriv)=>{
 
 const verifyVC = async (vc, issuerDid) =>{
   try{
-    // console.log(didContractAdd)
-    // console.log(rpcURL)
+
     const providerConfig = {
       name: "ganache",
       rpcUrl: rpcURL,
@@ -102,15 +96,12 @@ const verifyVC = async (vc, issuerDid) =>{
     const ethrDidResolver = getResolver(providerConfig);
     const didResolver = new Resolver(ethrDidResolver);
     const verifiedVc = await verifyCredential(vc,didResolver)
-    // return verifiedVc
-    // console.log(verifiedVc.payload.iss)
-    // console.log(issuerDid)
+
     if (verifiedVc.payload.iss !== issuerDid) {
       console.log("False")
       return "False"
     }
     else{
-      // console.log("eee")
       console.log("True")
       return "True"
     }
@@ -119,9 +110,7 @@ const verifyVC = async (vc, issuerDid) =>{
   }
   
 }
-// console.log(didContractAdd)
-// console.log(verifyVC("eyJhbGciOiJFUzI1NkstUiIsInR5cCI6IkpXVCJ9.eyJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSJdLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIl0sImNyZWRlbnRpYWxTdWJqZWN0Ijp7InRyYWluZXIiOnsiZGlkIjoiZGlkOmV0aHI6Z2FuYWNoZToweDNFNWU5MTExQWU4ZUI3OEZlMUNDM2JiODkxNWQ1RDQ2MUYzRWY5QTkifX19LCJzdWIiOiJkaWQ6ZXRocjpnYW5hY2hlOmRpZDpldGhyOmdhbmFjaGU6MHgzRTVlOTExMUFlOGVCNzhGZTFDQzNiYjg5MTVkNUQ0NjFGM0VmOUE5IiwibmJmIjoxNTYyOTUwMjgyLCJpc3MiOiJkaWQ6ZXRocjpnYW5hY2hlOjB4MEQzOGU2NTNlQzI4YmRlYTVBMjI5NmZENTk0MGFhQjJEMEI4ODc1YyJ9.lVbydxlN6Mn0ngelfdsem8S96s6qmuceA-iVmv5UO1XQfPFZB2DtiEIm5iAzTYfcKx-AGAdv9jvqEfIlPeyU4gE","did:ethr:ganache:did:ethr:ganache:0x3E5e9111Ae8eB78Fe1CC3bb8915d5D461F3Ef9A9")
-// )
+
 module.exports = {
   createIssuerDID:createIssuerDID,
   createHolderDID:createHolderDID,

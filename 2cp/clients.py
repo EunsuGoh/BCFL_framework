@@ -13,6 +13,7 @@ import pyvacy.optim
 from pyvacy.analysis import moments_accountant as epsilon
 from ipfs_client import IPFSClient
 from contract_clients import CrowdsourceContractClient, ConsortiumContractClient
+from token_contract import TokenContractClient
 import contribution
 import json
 from torchvision.transforms import ToTensor
@@ -28,7 +29,7 @@ import wandb
 
 # device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 # print(device)
-# wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
+wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
 
 class _BaseClient:
     """
@@ -36,21 +37,27 @@ class _BaseClient:
     Crowdsource Protocol and the Consortium Protocol.
     """
 
-    def __init__(self, name, model_constructor, contract_constructor,account_idx, contract_address=None, deploy=False):
+    def __init__(self, name, model_constructor, contract_constructor,account_idx, token_contract_constructor, contract_address=None, deploy=False, token_contract_address=None, token_deploy = False):
         self.evt = threading.Event()
         self.name = name
         self._model_constructor = model_constructor
         if deploy:
             self._print("Deploying contract...")
+        if token_deploy:
+            self._print("Deploying token contract...")
         # self._print(f'contract_constructor : {contract_constructor}')
         self._contract = contract_constructor(
             account_idx, contract_address, deploy)
+        self._token_contract = token_contract_constructor(account_idx,token_contract_address,token_deploy)
         self._account_idx = account_idx
         self.address = self._contract.address
+        self.token_contract_address = self._token_contract.contract_address
         self.contract_address = self._contract.contract_address
         # self._print(f"name : {self.name}, model_constructor : {self._model_constructor},provider : {provider}, account_idx : {account_idx}, contract_address : {contract_address}, deploy : {deploy} ")
         self._print(
             f"Connected to contract at address {self.contract_address}")
+        self._print(
+            f"Connected to Token contract at address {self.token_contract_address}")
 
     def get_token_count(self, address=None, training_round=None):
         return self._contract.countTokens(address, training_round)
@@ -83,9 +90,10 @@ class _GenesisClient(_BaseClient):
     Extends upon base client with the ability to set the genesis model to start training.
     """
 
-    def __init__(self, name, model_constructor,contract_constructor,account_idx,contract_address=None, deploy=False):
+    def __init__(self, name, model_constructor,contract_constructor,account_idx,token_contract_constructor,contract_address=None, deploy=False, token_contract_address = None, token_deploy = False):
         super().__init__(name, model_constructor,
-                         contract_constructor, account_idx, contract_address, deploy)
+                         contract_constructor, account_idx,token_contract_constructor, contract_address, deploy,
+                         token_contract_address,token_deploy)
         self._ipfs_client = IPFSClient(model_constructor,"/ip4/127.0.0.1/tcp/5001")
 
     def set_genesis_model(self, round_duration,scenario,max_num_updates=0):
@@ -136,15 +144,17 @@ class CrowdsourceClient(_GenesisClient):
     TOKENS_PER_UNIT_LOSS = 1e18  # same as the number of wei per ether
     CURRENT_ROUND_POLL_INTERVAL = 1.  # Ganache can't mine quicker than once per second
 
-    def __init__(self, name, data, targets, model_constructor, model_criterion, account_idx, batch_size = 64, contract_address=None, deploy=False, device_num="0",did_address=None):
+    def __init__(self, name, data, targets, model_constructor, model_criterion, account_idx, batch_size = 64, contract_address=None, deploy=False, device_num="0",did_address=None, token_contract_address = None, token_deploy=False):
         super().__init__(name,
                          model_constructor,
                          
                          CrowdsourceContractClient,
-                         
                          account_idx,
+                         TokenContractClient,
                          contract_address,
                          deploy,
+                         token_contract_address,
+                         token_deploy
                          )
         self.did = did_address
         self.data_length = data.__len__()
@@ -208,10 +218,20 @@ class CrowdsourceClient(_GenesisClient):
                 break
             self._print(f"Done training. Gas used: {self.get_gas_used()}")
             
+    # TODO : make additional score function for did clients
+    def weight_fn(self,did_info, accounts,scores,alpha):
+        new_score = scores
+        for cid,account in accounts.items():
+            for address,did in did_info.items() :  
+                if account == address:
+                    _weighted_score = scores[cid]
+                    _weighted_score *= alpha
+                    weighted_score = _weighted_score + scores[cid]
+                    new_score[cid] = weighted_score
+        return new_score
 
-           
 
-    def evaluate_until(self, final_round_num, method, scenario, selection_method="all"):
+    def evaluate_until(self, final_round_num, method, scenario, selection_method="all", did_info = None, alpha=0.1):
         self._gas_history[1] = self.get_gas_used()
         for r in range(1, final_round_num+1):
             # self.wait_for_round(r + 1)
@@ -221,11 +241,14 @@ class CrowdsourceClient(_GenesisClient):
             while(self._contract.waitTrainers(r) != True):
                 time.sleep(self.CURRENT_ROUND_POLL_INTERVAL)
             scores,accounts = self._evaluate_single_round(r, method ,scenario)
-            txs = self._set_tokens(scores)
+            self._print(f"Before weight score : {scores}")
+            new_score = self.weight_fn(did_info,accounts,scores,alpha)
+            self._print(f"After weight score : {new_score}")
+            txs = self._set_tokens(new_score)
             self.wait_for_txs(txs)
             self._gas_history[r] = self.get_gas_used()
             global_loss = self.evaluate_global(r)
-            # wandb.log({"global_loss": global_loss})
+            wandb.log({"global_loss": global_loss})
             # CS 방법선택 : random, fcfs, all(default)
             client_list = self._contract.getCurTrainers(r)
             self._print(client_list)
@@ -327,7 +350,7 @@ class CrowdsourceClient(_GenesisClient):
     def _avg_global_model(self, training_round):
         avg_model = self._model_constructor()
         cids = self._get_cids(training_round)
-        models = self._get_models(cids)
+        models = self._get_models(cids) # who's cid? need information
         # with torch.no_grad():
         #     for params in avg_model.parameters():
         #         params *= 0
@@ -631,6 +654,8 @@ class CrowdsourceClient(_GenesisClient):
             num_tokens = max(0, int(score * self.TOKENS_PER_UNIT_LOSS))
             self._print(f"account : {account} cid :{cid} score :{score}: and tokens :{num_tokens}")
             tx = self._contract.setTokens(cid, num_tokens)
+            txs.append(tx)
+            tx = self._token_contract.transfer(account,num_tokens)
             txs.append(tx)
         return txs
 

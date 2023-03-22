@@ -28,21 +28,3 @@ def loo(c_fn,players):
         leave_one_out_contribution[player] = contribution 
         
     return leave_one_out_contribution
-
-# def gtg_shapley(c_fn):
-    # GTG Shapley method : 
-    # 1. for horizontal learning
-    # 2. guided Monte Carlo sampling - within-round, between round truncation
-    
-
-# def test( plrs, plr_i):
-#     players_excluding_i = set(plrs).difference({plr_i})
-#     sv = 0
-#     print(len(plrs)-1)
-#     for coalition in powerset(players_excluding_i):
-#         coalition_plus_i = set(coalition).union({plr_i})
-#         print(len(coalition))
-#         print(coalition, comb(len(plrs)-1, len(coalition))) 
-
-# list = ['A','B','C']
-# test(list,'A')

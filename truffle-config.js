@@ -52,7 +52,8 @@ module.exports = {
     develop: {
       port: 8545, // Standard Ethereum port (default: none)
     },
-    quickstartWallet: {
+
+    besu: {
       provider: () => new PrivateKeyProvider(privateKey, "http://localhost:8545"),
       network_id: "*",
     }

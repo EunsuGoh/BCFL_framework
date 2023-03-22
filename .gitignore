@@ -12,3 +12,4 @@ test_rppg
 package-lock.json
 **/accounts.json
 **/accounts.txt
+**/check.py

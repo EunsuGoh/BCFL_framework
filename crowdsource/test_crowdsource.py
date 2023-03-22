@@ -3,7 +3,7 @@ import threading
 import torch
 import torch.nn.functional as F
 from clients import CrowdsourceClient
-from utils_2cp import print_token_count
+from utils_2cp import print_token_count, check_balance
 
 from test_utils.my import MyData, Mymodel
 from test_utils.functions import same_weights
@@ -87,7 +87,7 @@ def test_crowdsource ():
   # Define Eval data
   # your testset Path
     testset_path = os.path.realpath(os.path.dirname(__file__))+'/data/user_data/evaluator_data.json'
-    print(testset_path)
+
     with open(testset_path,'r') as f:
         eval_dataset = json.load(f)
         eval_data = eval_dataset['x']
@@ -98,7 +98,7 @@ def test_crowdsource ():
 
   # Evaluator client setting
     evaluator = CrowdsourceClient(
-        "Evaluator", my_eval_data, eval_targets, Mymodel, F.cross_entropy, 0, deploy=True)
+        "Evaluator", my_eval_data, eval_targets, Mymodel, F.cross_entropy, 0, deploy=True, token_deploy=True)
 
 
     trainers = [] # trainer1, trainer2 ...
@@ -108,7 +108,7 @@ def test_crowdsource ():
     trainer_accounts = get_accounts()
 
     # temp issuer (ganache account's last index account)
-    issuer_account = trainer_accounts[-1:][0]
+    issuer_account = trainer_accounts[0]
     issuer_info = {}
 
     #Issueing issuer's did
@@ -190,7 +190,9 @@ def test_crowdsource ():
             target=evaluator.evaluate_until,
             args=(TRAINING_ITERATIONS, EVAL_METHOD,"crowdsource"),
             kwargs={
-                'selection_method':SELECTION_METHOD
+                'selection_method':SELECTION_METHOD,
+                "did_info":trainer_did,
+                "alpha":config['ALPHA']
             },
             daemon=True
         )
@@ -202,10 +204,16 @@ def test_crowdsource ():
     for t in threads:
         t.join()
 
-    for trainer in train_clients:
-        print_token_count(trainer)
+    # Fake token print
+    # for trainer in train_clients:
+    #     print_token_count(trainer)
     
     final_global_model = evaluator._get_global_model(TRAINING_ITERATIONS+1)
-    print(final_global_model)
+    # print(final_global_model)
+    print("\n\n")
+    #erc20 token print
+    for trainer in train_clients:
+        balance = check_balance(evaluator,trainer.address)
+        print(f"\t {trainer.name} 's token balance is {balance}")
 
 test_crowdsource()

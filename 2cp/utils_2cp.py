@@ -8,3 +8,9 @@ def print_token_count(client):
     total_tokens = client.get_total_token_count()
     percent = int(100*tokens/total_tokens) if tokens > 0 else 0
     print(f"\t\t{client.name} has {tokens} of {total_tokens} tokens ({percent}%)")
+
+def check_balance(client, account):
+    print(f"Checking {account}'s balance...")
+    print(f"\t token contract address : {client.token_contract_address}")
+    balance = client._token_contract.balanceOf(account)
+    return balance

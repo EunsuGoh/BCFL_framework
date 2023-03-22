@@ -19,6 +19,7 @@ DID_CONTRACT_ADDRESS = "address"
 NODE_PATH = "node path"
 
 #RPC_URL
-RPC_URL = "http://127.0.0.1:7545" # 7545: ganache, 8545: besu
-NETWORK_ID = "5777" # 5777: ganache, 1337: besu
-
+# 7545: ganache, 8545: besu
+RPC_URL = "http://127.0.0.1:7545"
+# 5777: ganache, 1337: besu
+NETWORK_ID = "5777"
