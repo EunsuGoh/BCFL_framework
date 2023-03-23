@@ -10,6 +10,16 @@ from test_utils.functions import same_weights
 from consortium_conf import config
 import os
 import json
+import re
+import random
+import numpy as np
+import torch.backends.cudnn as cudnn
+from dotenv import load_dotenv
+import subprocess
+
+from web3 import HTTPProvider, Web3 
+
+load_dotenv()
 
 TRAINING_ITERATIONS = config['TRAINING_ITERATIONS']
 TRAINING_HYPERPARAMS = config['TRAINING_HYPERPARAMS']
@@ -18,8 +28,19 @@ EVAL_METHOD = config['EVAL_METHOD']
 TORCH_SEED = 8888
 ROUND_DURATION = config['ROUND_DURATION']  # expecting rounds to always end early
 SELECTION_METHOD = config['SELECTION_METHOD']
+NODE_PATH = os.environ["NODE_PATH"]
 
 torch.manual_seed(TORCH_SEED)
+torch.cuda.manual_seed(TORCH_SEED)
+torch.cuda.manual_seed_all(TORCH_SEED)
+np.random.seed(TORCH_SEED)
+cudnn.benchmark = False
+cudnn.deterministic = True
+random.seed(TORCH_SEED)
+# torch.use_deterministic_algorithms(True)
+os.environ["PYTHONHASHSEED"] = str(TORCH_SEED)
+account_list_path = os.path.dirname(os.path.abspath(__file__))
+# torch.manual_seed(TORCH_SEED)
 
 def test_consortium():
     # Genesis Setting

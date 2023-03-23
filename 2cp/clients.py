@@ -29,7 +29,7 @@ import wandb
 
 # device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 # print(device)
-wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
+# wandb.init(project=os.environ.get("WANDB_PROJECT_NAME"),entity=os.environ.get("WANDB_USER_NAME"))
 
 class _BaseClient:
     """
@@ -171,12 +171,13 @@ class CrowdsourceClient(_GenesisClient):
         self._gas_history = {}
         self._account_idx = account_idx
         
-
+    # all
     def seed_worker(worker_id):
         worker_seed = torch.initial_seed() % 2**32
         np.random.seed(worker_seed)
         random.seed(worker_seed)
 
+    # trainer
     def train_one_round(self, batch_size, epochs, learning_rate, dp_params=None):
         cur_round = self._contract.currentRound()
         # print("cur_round : ",cur_round)
@@ -191,6 +192,7 @@ class CrowdsourceClient(_GenesisClient):
         self._gas_history[cur_round] = self.get_gas_used()
         self._print(f"Done training. Gas used: {self.get_gas_used()}")
 
+    # trainer
     def train_until(self, final_round_num, batch_size, epochs, learning_rate, dp_params=None):
         
         start_round = self._contract.currentRound()
@@ -218,7 +220,7 @@ class CrowdsourceClient(_GenesisClient):
                 break
             self._print(f"Done training. Gas used: {self.get_gas_used()}")
             
-    # TODO : make additional score function for did clients
+    # evaluator
     def weight_fn(self,did_info, accounts,scores,alpha):
         new_score = scores
         for cid,account in accounts.items():
@@ -230,7 +232,7 @@ class CrowdsourceClient(_GenesisClient):
                     new_score[cid] = weighted_score
         return new_score
 
-
+    # evaluator
     def evaluate_until(self, final_round_num, method, scenario, selection_method="all", did_info = None, alpha=0.1):
         self._gas_history[1] = self.get_gas_used()
         for r in range(1, final_round_num+1):
@@ -304,6 +306,7 @@ class CrowdsourceClient(_GenesisClient):
         self.evt.set()
         
 
+    # evaluator
     def find_score(self, model_cid, account):
         score_info = self._contract.getScores(model_cid)
         if(score_info[0] != account):
@@ -313,9 +316,11 @@ class CrowdsourceClient(_GenesisClient):
             score = score_info[1]
         return score
 
+    # all
     def is_evaluator(self):
         return self._contract.evaluator() == self._contract.address
 
+    # all
     def get_current_global_model(self):
         """
         Calculate, or get from cache, the current global model.
@@ -324,6 +329,7 @@ class CrowdsourceClient(_GenesisClient):
         current_global_model = self._get_global_model(current_training_round)
         return current_global_model
 
+    # evaluator
     @methodtools.lru_cache()
     def evaluate_global(self, training_round):
         """
@@ -333,6 +339,7 @@ class CrowdsourceClient(_GenesisClient):
         loss = self._evaluate_model(model)
         return loss
     
+    # evaluator
     def save_global_model (self, training_round):
         # get_global_model 사용 시 이전 라운드*(r-1) 의 글로벌 모델을 받아옴
         # 따라서 현재 라운드 저장이 필요,,
@@ -347,6 +354,7 @@ class CrowdsourceClient(_GenesisClient):
         # torch.save(model.state_dict(),"/media/hdd1/es_workspace/BCFL_framework_es/crowdsource/avg_model1.pth")
         return tx
 
+    # evaluator
     def _avg_global_model(self, training_round):
         avg_model = self._model_constructor()
         cids = self._get_cids(training_round)
@@ -387,6 +395,7 @@ class CrowdsourceClient(_GenesisClient):
 
         return avg_model
 
+    # evaluator
     def evaluate_current_global(self):
         """
         Evaluate the current global model using own data.
@@ -394,6 +403,7 @@ class CrowdsourceClient(_GenesisClient):
         current_training_round = self._contract.currentRound()
         return self.evaluate_global(current_training_round)
 
+    # evaluator
     def predict(self):
         model = self.get_current_global_model()
         # model = model.send(self._worker)
@@ -405,6 +415,7 @@ class CrowdsourceClient(_GenesisClient):
                 predictions.append(pred)
         return torch.stack(predictions)
 
+    # all
     def wait_for_round(self, n):
         self._print(
             f"Waiting for round {n} ({self._contract.secondsRemaining()} seconds remaining)...")
@@ -412,6 +423,7 @@ class CrowdsourceClient(_GenesisClient):
             time.sleep(self.CURRENT_ROUND_POLL_INTERVAL)
         self._print(f"Round {n} started")
 
+    # all
     def get_gas_history(self):
         return self._gas_history
 
@@ -427,6 +439,7 @@ class CrowdsourceClient(_GenesisClient):
     #     avg_model = self._avg_model(models)
     #     return avg_model
     
+    # all
     def _get_global_model(self, training_round):
         if training_round == 1:
             model_cid = self._contract.genesis()
@@ -435,6 +448,7 @@ class CrowdsourceClient(_GenesisClient):
         current_global_model = self._ipfs_client.get_model(model_cid)
         return current_global_model
 
+    # trainer
     def _train_single_round(self, round_num, batch_size, epochs, learning_rate, dp_params):
         """
         Run a round of training using own data, upload and record the contribution.
@@ -451,6 +465,7 @@ class CrowdsourceClient(_GenesisClient):
         # params = list(model.parameters())
         return tx,model
 
+    # trainer
     def _train_model(self, model, batch_size, epochs, lr, dp_params):
         
         train_loader = torch.utils.data.DataLoader(self._data, batch_size=batch_size,
@@ -497,6 +512,7 @@ class CrowdsourceClient(_GenesisClient):
         # model.get()
         return model
 
+    # evaluator
     def _evaluate_model(self, model, *localFlag):
         model = model  # .send(self._worker)
         # print(model)
@@ -518,10 +534,12 @@ class CrowdsourceClient(_GenesisClient):
         avg_loss = total_loss / len(self._test_loader)
         return avg_loss
 
+    # all
     def _record_model(self, uploaded_cid, training_round):
         """Records the given model IPFS cid on the smart contract."""
         return self._contract.addModelUpdate(uploaded_cid, training_round)
 
+    # all
     def _get_cids(self, training_round):
         if training_round < 0 or training_round > self._contract.currentRound():
             raise ValueError(
@@ -533,6 +551,7 @@ class CrowdsourceClient(_GenesisClient):
             return self._get_cids(training_round - 1)
         return cids
 
+    # all
     def _get_models(self, model_cids):
         models = []
         for cid in model_cids:
@@ -540,10 +559,12 @@ class CrowdsourceClient(_GenesisClient):
             models.append(model)
         return models
 
+    # all
     def _get_genesis_model(self):
         gen_cid = self._contract.genesis()
         return self._ipfs_client.get_model(gen_cid)
 
+    # evaluator
     def _avg_model(self, models):
         avg_model = self._model_constructor()
         averaged_weights = []
@@ -577,7 +598,7 @@ class CrowdsourceClient(_GenesisClient):
 
         return avg_model
 
-
+    # evaluatorß
     def _evaluate_single_round(self, training_round, method, scenario):
         """
         Provide Shapley Value score for each update in the given training round.
@@ -642,6 +663,7 @@ class CrowdsourceClient(_GenesisClient):
             f"Scores in round :{training_round} are :{list(scores.values())}: and cids :{cids}")
         return scores,accounts
 
+    # evaluator
     def _set_tokens(self, cid_scores):
         """
         Record the given Shapley value scores for the given contributions.
@@ -659,6 +681,7 @@ class CrowdsourceClient(_GenesisClient):
             txs.append(tx)
         return txs
 
+    # evaluator
     @methodtools.lru_cache()
     def _marginal_value(self, training_round, *update_cids):
         """
@@ -673,6 +696,7 @@ class CrowdsourceClient(_GenesisClient):
         loss = self._evaluate_model(avg_model,True)
         
         return start_loss - loss
+
 
 class ConsortiumSetupClient(_GenesisClient):
     """

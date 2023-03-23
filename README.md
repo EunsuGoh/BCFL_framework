@@ -75,6 +75,7 @@
 1. ganache-cli --port 7545 --networkId 5777 -a 31 -d
 2. ipfs daemon
 3. truffle migrate --network development --reset
+3-1. DIDregistry contract address -> .env에 기록
 4. cd crowdsource
 5. python test_crowdsource.py
 
