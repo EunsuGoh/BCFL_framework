@@ -4,7 +4,9 @@ pragma experimental ABIEncoderV2;
 
 /// @title Records contributions made to a Crowdsourcing Federated Learning process
 /// @author Harry Cai
-contract Crowdsource {
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+contract Crowdsource is ERC20 {
     /// @notice Address of contract creator, who evaluates updates
     address public evaluator;
 
@@ -61,8 +63,9 @@ contract Crowdsource {
     event Log(string _myString , uint256 round);
 
     /// @notice Constructor. The address that deploys the contract is set as the evaluator.
-    constructor() public {
+    constructor() public ERC20("FLToken","FLT"){
         // evaluator = msg.sender;
+        _mint(msg.sender,1e25);
         evaluator = tx.origin;
     }
 

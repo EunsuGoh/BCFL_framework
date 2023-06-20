@@ -1,5 +1,4 @@
 import torch
-import torchvision
 import torchvision.transforms as transforms
 import torch.nn as nn
 import torch.nn.functional as F
@@ -48,10 +47,10 @@ class _BaseClient:
         # self._print(f'contract_constructor : {contract_constructor}')
         self._contract = contract_constructor(
             account_idx, contract_address, deploy)
-        # self._token_contract = token_contract_constructor(account_idx,token_contract_address,token_deploy)
+        self._token_contract = token_contract_constructor(account_idx,token_contract_address,token_deploy)
         self._account_idx = account_idx
         self.address = self._contract.address
-        # self.token_contract_address = self._token_contract.contract_address
+        self.token_contract_address = self._token_contract.contract_address
         self.contract_address = self._contract.contract_address
         # self._print(f"name : {self.name}, model_constructor : {self._model_constructor},provider : {provider}, account_idx : {account_idx}, contract_address : {contract_address}, deploy : {deploy} ")
         self._print(
@@ -147,6 +146,7 @@ class CrowdsourceClient(_GenesisClient):
     def __init__(self, name, data, targets, model_constructor, model_criterion, account_idx, batch_size = 64, contract_address=None, deploy=False, device_num="0",did_address=None, token_contract_address = None, token_deploy=False):
         super().__init__(name,
                          model_constructor,
+                         
                          CrowdsourceContractClient,
                          account_idx,
                          TokenContractClient,
@@ -248,8 +248,8 @@ class CrowdsourceClient(_GenesisClient):
             self._print(f"Before weight score : {scores}")
             new_score = self.weight_fn(did_info,accounts,scores,alpha)
             self._print(f"After weight score : {new_score}")
-            txs = self._set_tokens(new_score)
-            self.wait_for_txs(txs)
+            tx = self._set_tokens(new_score)
+            self.wait_for_txs([tx])
             self._gas_history[r] = self.get_gas_used()
             global_loss = self.evaluate_global(r)
             # wandb.log({"global_loss": global_loss})
@@ -276,6 +276,7 @@ class CrowdsourceClient(_GenesisClient):
             
             # Save global model to IPFS and BlockChain
             tx = self.save_global_model(r)
+            self.wait_for_txs([tx])
             # 해당 라운드 Esave_glovaluation 완료
             self._print(f"round {r} evaluation complete")
             tx = self._contract.completeEval(r)
@@ -677,7 +678,9 @@ class CrowdsourceClient(_GenesisClient):
             account = score_info[0]
             num_tokens = max(0, int(score * self.TOKENS_PER_UNIT_LOSS))
             self._print(f"account : {account} cid :{cid} score :{score}: and tokens :{num_tokens}")
-            tx = self._contract.transfer(account,num_tokens)
+            # tx = self._contract.setTokens(cid, num_tokens)
+            # txs.append(tx)
+            tx = self._token_contract.transfer(account,num_tokens)
             txs.append(tx)
         return txs
 

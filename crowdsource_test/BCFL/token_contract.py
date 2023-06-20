@@ -3,9 +3,6 @@ import os
 import base58
 from web3 import HTTPProvider, Web3
 from dotenv import load_dotenv
-from eth_account import Account
-from web3.middleware import geth_poa_middleware
-
 
 load_dotenv()
 
@@ -21,18 +18,9 @@ class BaseEthClient:
 
     def __init__(self, account_idx):
         self._w3 = Web3(HTTPProvider(self.PROVIDER_ADDRESS)) #json rpc 서버 연결(가나슈)
-        self._w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-        # accounts = self._w3.eth.accounts
-        # self.address = self._w3.eth.accounts[account_idx] # 이더리움 지갑주소
-        # self._w3.eth.defaultAccount = self.address # 지정된 지갑주소를 기본주소로
-         # for mumbai
-        if account_idx == 0:
-            self.address = os.environ["METAMASK_EAVLUATOR_ACCOUNT"]
-            self._w3.eth.defaultAccount = self.address
-
-        else :
-            self.address = os.environ["METAMASK_TRAINER_ACCOUNT"]
-            self._w3.eth.defaultAccount = self.address
+        accounts = self._w3.eth.accounts
+        self.address = self._w3.eth.accounts[account_idx] # 이더리움 지갑주소
+        self._w3.eth.defaultAccount = self.address # 지정된 지갑주소를 기본주소로
 
         self.txs = [] # 트랜잭션 담을 리스트
     
@@ -58,10 +46,6 @@ class BaseEthClient:
         # print(self.address)
         return self.address
 
-    def signedHash(self, tx, privatekey):
-        signed_tx = Account.signTransaction(tx,privatekey)
-        tx_hash = self._w3.eth.sendRawTransaction(signed_tx.rawTransaction)
-        return tx_hash
 
 # 2. 컨소시엄, 크라우드 컨트랙트의 공통기능 포함
 # 계약 설정, byte32 및 기타 유틸리티와의 변환 처리
@@ -122,18 +106,14 @@ class TokenContractClient(_BaseContractClient):
         )
     
     def transfer (self,to_address,amount):
-        nonce = self._w3.eth.getTransactionCount(self.address)
-        tx =  self._contract.functions.transfer(to_address,amount).buildTransaction({'gas': 1000000,'nonce':nonce})
-        tx_hash = self.signedHash(tx,os.environ["METAMASK_EVALUATOR_PRIVATE_KEY"])
-        self.txs.append(tx_hash)
-        return tx_hash
+        tx =  self._contract.functions.transfer(to_address,amount).transact()
+        self.txs.append(tx)
+        return tx
     
     def transfer_from (self,from_address, to_address,amount):
-        nonce = self._w3.eth.getTransactionCount(self.address)
-        tx =  self._contract.functions.transferFrom(from_address,to_address,amount).buildTransaction({'gas': 1000000,'nonce':nonce})
-        tx_hash = self.signedHash(tx,os.environ["METAMASK_EVALUATOR_PRIVATE_KEY"])
-        self.txs.append(tx_hash)
-        return tx_hash
+        tx =  self._contract.functions.transferFrom(from_address,to_address,amount).transact()
+        self.txs.append(tx)
+        return tx
     
     def balanceOf (self, address):
         balance = self._contract.functions.balanceOf(address).call()

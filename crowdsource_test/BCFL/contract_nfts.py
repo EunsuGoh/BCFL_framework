@@ -2,12 +2,6 @@ import json
 import os
 import base58
 from web3 import HTTPProvider, Web3
-from dotenv import load_dotenv
-from eth_account import Account
-from web3.middleware import geth_poa_middleware
-
-
-load_dotenv()
 
 # 1. 이더리움 클라이언트
 class BaseEthClient:
@@ -15,24 +9,14 @@ class BaseEthClient:
     An ethereum client.
     """
 
-    PROVIDER_ADDRESS = os.environ.get("RPC_URL")
-    NETWORK_ID = os.environ.get("NETWORK_ID")
-
+    PROVIDER_ADDRESS = "http://127.0.0.1:7545"
+    NETWORK_ID = "5777"
 
     def __init__(self, account_idx):
         self._w3 = Web3(HTTPProvider(self.PROVIDER_ADDRESS)) #json rpc 서버 연결(가나슈)
-        self._w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-        # accounts = self._w3.eth.accounts
-        # self.address = self._w3.eth.accounts[account_idx] # 이더리움 지갑주소
-        # self._w3.eth.defaultAccount = self.address # 지정된 지갑주소를 기본주소로
-         # for mumbai
-        if account_idx == 0:
-            self.address = os.environ["METAMASK_EAVLUATOR_ACCOUNT"]
-            self._w3.eth.defaultAccount = self.address
 
-        else :
-            self.address = os.environ["METAMASK_TRAINER_ACCOUNT"]
-            self._w3.eth.defaultAccount = self.address
+        self.address = self._w3.eth.accounts[account_idx] # 이더리움 지갑주소
+        self._w3.eth.defaultAccount = self.address # 지정된 지갑주소를 기본주소로
 
         self.txs = [] # 트랜잭션 담을 리스트
     
@@ -58,10 +42,6 @@ class BaseEthClient:
         # print(self.address)
         return self.address
 
-    def signedHash(self, tx, privatekey):
-        signed_tx = Account.signTransaction(tx,privatekey)
-        tx_hash = self._w3.eth.sendRawTransaction(signed_tx.rawTransaction)
-        return tx_hash
 
 # 2. 컨소시엄, 크라우드 컨트랙트의 공통기능 포함
 # 계약 설정, byte32 및 기타 유틸리티와의 변환 처리
@@ -104,37 +84,29 @@ class _BaseContractClient(BaseEthClient):
             address=address
         )
         return instance, address
+ 
+    def _to_bytes32(self, model_cid):
+        bytes34 = base58.b58decode(model_cid)
+        assert bytes34[:2] == self.IPFS_HASH_PREFIX, \
+            f"IPFS cid should begin with {self.IPFS_HASH_PREFIX} but got {bytes34[:2].hex()}"
+        bytes32 = bytes34[2:]
+        return bytes32
+    
+    def _from_bytes32(self, bytes32):
+        bytes34 = self.IPFS_HASH_PREFIX + bytes32
+        model_cid = base58.b58encode(bytes34).decode()
+        return model_cid
 
-class TokenContractClient(_BaseContractClient):
-    """
-    Wrapper over the Crowdsource.sol ABI, to gracefully bridge Python data to Solidity.
-
-    The API of this class should match that of the smart contract.
-    """
-
-    def __init__(self,  account_idx, address, deploy):
+class NFTContract(_BaseContractClient):
+    def __init__(self, account_idx, address, deploy):
         super().__init__(
-            # "../build/contracts/Crowdsource.json",
-            os.path.realpath(os.path.dirname(__file__))[0:-3]+"build/contracts/Token.json",
+            os.path.realpath(os.path.dirname(__file__))[0:-3]+"build/contracts/Crowdsource.json",
             account_idx,
             address,
             deploy
         )
-    
-    def transfer (self,to_address,amount):
-        nonce = self._w3.eth.getTransactionCount(self.address)
-        tx =  self._contract.functions.transfer(to_address,amount).buildTransaction({'gas': 1000000,'nonce':nonce})
-        tx_hash = self.signedHash(tx,os.environ["METAMASK_EVALUATOR_PRIVATE_KEY"])
-        self.txs.append(tx_hash)
-        return tx_hash
-    
-    def transfer_from (self,from_address, to_address,amount):
-        nonce = self._w3.eth.getTransactionCount(self.address)
-        tx =  self._contract.functions.transferFrom(from_address,to_address,amount).buildTransaction({'gas': 1000000,'nonce':nonce})
-        tx_hash = self.signedHash(tx,os.environ["METAMASK_EVALUATOR_PRIVATE_KEY"])
-        self.txs.append(tx_hash)
-        return tx_hash
-    
-    def balanceOf (self, address):
-        balance = self._contract.functions.balanceOf(address).call()
-        return balance
+
+    def mint(self, recipient, tokenUri):
+        tx = self._contract.functions.mintNFT(recipient, tokenUri).transact()
+        self.txs.append(tx)
+        return tx

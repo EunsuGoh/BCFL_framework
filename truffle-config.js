@@ -23,7 +23,11 @@
 //
 // const fs = require('fs');
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
+const dotenv = require("dotenv");
+dotenv.config();
+
 const PrivateKeyProvider = require("@truffle/hdwallet-provider");
+// const PrivateKeyProvider = require("truffle-privatekey-provider");
 const privateKey = ["0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3"];
 module.exports = {
   /**
@@ -56,6 +60,20 @@ module.exports = {
     besu: {
       provider: () => new PrivateKeyProvider(privateKey, "http://localhost:8545"),
       network_id: "*",
+    },
+    
+    sepolia:{
+      provider: () => new PrivateKeyProvider([process.env.METAMASK_EVALUATOR_PRIVATE_KEY], "https://sepolia.infura.io/v3/"+process.env.SEPOLIA_API_KEY),
+      network_id:"*"
+    }
+    ,
+    mumbai:{
+      provider: () => new PrivateKeyProvider(process.env.METAMASK_EVALUATOR_PRIVATE_KEY, "https://polygon-mumbai.g.alchemy.com/v2/"+process.env.MUMBAI_API_KEY),
+      network_id:"*",
+      confirmations: 2,
+      timeoutBlocks: 200,
+      skipDryRun: true,
+      networkCheckTimeoutnetworkCheckTimeout: 10000
     }
 
     // Another network with more advanced options...
